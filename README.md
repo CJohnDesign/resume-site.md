@@ -1,10 +1,10 @@
 # resume-site.md
 
-> AI-Powered Resume Website Builder Through Voice Conversation
+> AI-Powered Resume Website Instructions Generator Through Voice Conversation
 
 **Built for the [Bolt.new Hackathon](https://hackathon.dev) 🚀**
 
-Transform your career story into a professional resume website through natural conversation. No forms, no templates—just talk about your experience and get a modern, responsive website ready to deploy.
+Transform your career story into comprehensive website building instructions through natural conversation. Talk about your experience, get detailed instructions, then paste them into [Bolt.new](https://bolt.new) to build your professional resume website.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![React](https://img.shields.io/badge/React-18.3.1-blue.svg)
@@ -13,14 +13,31 @@ Transform your career story into a professional resume website through natural c
 
 ## 🎯 What It Does
 
-resume-site.md revolutionizes resume creation by replacing tedious forms with intelligent conversation. Users speak naturally about their career while AI extracts, analyzes, and formats their information into comprehensive website instructions.
+resume-site.md revolutionizes resume website creation by generating comprehensive building instructions through intelligent conversation. Instead of building the website directly, it creates detailed specifications that you paste into [Bolt.new](https://bolt.new) to generate your professional resume site.
 
-### The Magic ✨
+### The Process ✨
 
-1. **Voice-First Interview**: Natural conversation about your career
-2. **AI Analysis**: GPT-4 powered extraction and professional writing
-3. **Website Generation**: Complete design brief for modern resume sites
-4. **One-Click Deploy**: Ready to paste into Bolt.new or any AI builder
+1. **Voice Interview**: Natural conversation about your career
+2. **AI Analysis**: GPT-4 powered extraction and professional formatting
+3. **Instructions Generation**: Complete design brief with all content and specifications
+4. **Copy & Paste**: Take the instructions to [Bolt.new](https://bolt.new) and watch your website come to life
+
+## 🔄 How The Workflow Works
+
+```
+resume-site.md → Generate Instructions → Bolt.new → Your Resume Website
+```
+
+### Step 1: Generate Instructions
+- Have a conversation about your career with our AI
+- AI extracts and formats your professional information
+- Receive comprehensive website building instructions
+
+### Step 2: Build with Bolt.new
+- Copy the generated instructions
+- Paste them into [Bolt.new](https://bolt.new)
+- Watch Bolt's AI build your professional resume website
+- Deploy instantly to the web
 
 ## 🚀 Features
 
@@ -36,6 +53,13 @@ resume-site.md revolutionizes resume creation by replacing tedious forms with in
 - Professional achievement summarization
 - Career progression analysis
 
+### 📋 **Comprehensive Instructions Output**
+- Complete website content structure
+- Modern design specifications (dark mode, responsive, animations)
+- Technical requirements and best practices
+- SEO and performance optimization guidelines
+- Ready-to-paste format for Bolt.new
+
 ### 📱 **Modern Design System**
 - Dark-mode interface with smooth animations
 - Responsive design for all devices
@@ -47,12 +71,6 @@ resume-site.md revolutionizes resume creation by replacing tedious forms with in
 - Fresh session on every reload
 - No data persistence between sessions
 - Secure OpenAI API communication
-
-### 🎨 **Professional Output**
-- Complete website design specifications
-- Modern, responsive layout requirements
-- Dark/light mode toggle functionality
-- SEO and performance optimizations
 
 ## 🛠️ Tech Stack
 
@@ -70,6 +88,7 @@ resume-site.md revolutionizes resume creation by replacing tedious forms with in
 ### Prerequisites
 - Node.js 18+ 
 - OpenAI API key
+- Access to [Bolt.new](https://bolt.new) for building the final website
 
 ### Installation
 
@@ -85,45 +104,65 @@ npm install
 npm run dev
 ```
 
-### Setup
+### Usage
 
-1. Open the application in your browser
-2. Enter your OpenAI API key (stored locally and encrypted)
-3. Click the microphone and start talking about your career!
+1. **Generate Instructions**:
+   - Open the application in your browser
+   - Enter your OpenAI API key (stored locally and encrypted)
+   - Click the microphone and start talking about your career
+   - Complete the voice interview process
+   - Download the generated website instructions
 
-## 🎯 How It Works
+2. **Build Your Website**:
+   - Open [Bolt.new](https://bolt.new) in a new tab
+   - Paste the instructions into Bolt's input field
+   - Watch Bolt's AI build your professional resume website
+   - Deploy and share your new resume site!
 
-### 1. **Conversational Interview**
-The AI conducts a structured interview covering:
-- Personal information (name, email, LinkedIn)
-- LinkedIn profile data parsing
-- Career objectives and goals
-- Detailed work experience discussion
+## 🎯 What Gets Generated
 
-### 2. **Intelligent Processing**
-- Real-time conversation analysis
-- Structured data extraction
-- Professional achievement formatting
-- Career story synthesis
+The app produces a comprehensive markdown document containing:
 
-### 3. **Website Generation**
-Produces a comprehensive design brief including:
-- Complete content structure
-- Modern design specifications
-- Technical requirements
-- Responsive layout guidelines
+### Content Structure
+- Personal information and contact details
+- Professional summary and career objectives
+- Detailed work experience with achievements
+- Education and certifications
+- Technical skills and competencies
 
-### 4. **Deploy Ready**
-The output is optimized for:
-- Bolt.new (primary target)
-- Any AI website builder
-- Manual development
-- CMS integration
+### Design Specifications
+- Modern, minimalistic design requirements
+- Dark mode with light mode toggle
+- Responsive layout for all devices
+- Professional color schemes and typography
+- Animation and interaction guidelines
+
+### Technical Requirements
+- React + Tailwind CSS recommendations
+- SEO optimization specifications
+- Performance requirements
+- Accessibility considerations
+- Mobile-first responsive design
+
+### Example Output
+```markdown
+# Build a Resume Website for John Smith
+
+We are building a professional resume website for John Smith, a Senior Software Engineer...
+
+## Personal Information
+- Name: John Smith
+- Email: john@example.com
+- LinkedIn: https://linkedin.com/in/johnsmith
+
+## Design Requirements
+Create a modern, minimalistic, and professional resume website with a strong emphasis on clarity...
+```
 
 ## 📋 Interview Flow
 
 ```
-Welcome → Email → LinkedIn → LinkedIn Data → Career Goals → Work Experience → Website Ready
+Welcome → Email → LinkedIn → LinkedIn Data → Career Goals → Work Experience → Instructions Ready
 ```
 
 Each step uses adaptive AI to:
@@ -140,11 +179,11 @@ Each step uses adaptive AI to:
 - Smooth transitions between speaking and listening
 - Accessible text input alternatives
 
-### Professional Aesthetics
-- Dark-mode interface with high contrast
-- Smooth animations and micro-interactions
-- Apple-inspired design language
-- Consistent spacing and typography
+### Instructions-Focused Output
+- Comprehensive specifications for AI builders
+- Optimized for Bolt.new's AI capabilities
+- Clear, actionable design requirements
+- Professional content formatting
 
 ### AI-Human Collaboration
 - AI handles data processing and formatting
@@ -164,6 +203,7 @@ Each step uses adaptive AI to:
 - Modify interview steps in `src/config/interviewSteps.ts`
 - Adjust design tokens in `src/design/tokens.ts`
 - Customize AI prompts in `src/hooks/useOpenAI.ts`
+- Update output format in `src/utils/resumeGenerator.ts`
 
 ## 🏗️ Architecture
 
@@ -177,15 +217,13 @@ src/
 ├── hooks/               # Custom React hooks
 ├── config/              # Interview configuration
 ├── types/               # TypeScript definitions
-└── utils/               # Utility functions
+└── utils/               # Utility functions (including resumeGenerator)
 ```
 
-### Key Hooks
-- `useApiKey`: Secure API key management
-- `useSpeechRecognition`: Voice input handling
-- `useSpeechSynthesis`: AI voice responses
-- `useOpenAI`: GPT-4 integration
-- `useStepController`: Interview flow management
+### Key Files
+- `resumeGenerator.ts`: Converts interview data to website instructions
+- `interviewSteps.ts`: Defines the conversation flow
+- `useOpenAI.ts`: Handles AI conversation and data extraction
 
 ## 🎪 Hackathon Context
 
@@ -194,7 +232,8 @@ Built for the **Bolt.new Hackathon** at [hackathon.dev](https://hackathon.dev), 
 ### Innovation
 - Voice-first approach to resume building
 - AI-powered career story extraction
-- Modern web presence over traditional PDFs
+- Perfect integration with Bolt.new's AI website builder
+- Instructions-based workflow for maximum flexibility
 
 ### Technical Excellence
 - Advanced React patterns and hooks
@@ -202,11 +241,11 @@ Built for the **Bolt.new Hackathon** at [hackathon.dev](https://hackathon.dev), 
 - Secure API integration
 - Professional design system
 
-### User Experience
-- Conversational interface design
-- Smooth animations and feedback
-- Accessibility considerations
-- Mobile-responsive layout
+### Bolt.new Integration
+- Optimized output format for Bolt's AI
+- Comprehensive design specifications
+- Ready-to-paste instructions
+- Seamless workflow from conversation to website
 
 ## 🤝 Contributing
 
@@ -233,7 +272,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- **Bolt.new** for inspiring the hackathon and providing the deployment platform
+- **Bolt.new** for inspiring the hackathon and providing the perfect deployment platform
 - **OpenAI** for the powerful GPT-4 API
 - **Vercel** for the excellent development experience
 - **Tailwind CSS** for the utility-first styling approach
@@ -248,4 +287,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Built with ❤️ for the Bolt.new Hackathon**
 
-*Transform your career story into a professional website through the power of conversation and AI.*
+*Transform your career story into professional website instructions through the power of conversation and AI, then bring them to life with Bolt.new.*
