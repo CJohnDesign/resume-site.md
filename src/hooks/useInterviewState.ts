@@ -49,22 +49,27 @@ export function useInterviewState() {
       return;
     }
 
+    console.log('📊 [InterviewState] Database connection status:', database.isConnected);
+
     try {
       // Save name and email when email is first provided
       if (updates.personalInfo?.email && fullState.personalInfo.name) {
-        console.log('📊 [InterviewState] Saving name and email to database');
+        console.log('📊 [InterviewState] Triggering saveNameAndEmail:', {
+          name: fullState.personalInfo.name,
+          email: email
+        });
         await database.saveNameAndEmail(fullState.personalInfo.name, email);
       }
 
       // Save LinkedIn URL when provided
       if (updates.personalInfo?.linkedin) {
-        console.log('📊 [InterviewState] Saving LinkedIn URL to database');
+        console.log('📊 [InterviewState] Triggering saveLinkedInUrl');
         await database.saveLinkedInUrl(email, fullState.personalInfo.linkedin);
       }
 
       // Save LinkedIn data when parsed
       if (updates.linkedinParsedData) {
-        console.log('📊 [InterviewState] Saving LinkedIn data to database');
+        console.log('📊 [InterviewState] Triggering saveLinkedInData');
         await database.saveLinkedInData(
           email,
           fullState.linkedinRawData || '',
@@ -74,7 +79,7 @@ export function useInterviewState() {
 
       // Save career objectives
       if (updates.careerObjectives || updates.careerObjectivesReport) {
-        console.log('📊 [InterviewState] Saving career objectives to database');
+        console.log('📊 [InterviewState] Triggering saveCareerObjectives');
         await database.saveCareerObjectives(
           email,
           fullState.careerObjectives || '',
@@ -84,7 +89,7 @@ export function useInterviewState() {
 
       // Save job experiences (when individual jobs are updated)
       if (updates.jobExperiences || updates.jobExperienceReports) {
-        console.log('📊 [InterviewState] Saving job experiences to database');
+        console.log('📊 [InterviewState] Triggering saveJobExperience');
         
         // Find which job was updated and save it
         const currentJobs = fullState.jobExperiences || {};
@@ -99,7 +104,7 @@ export function useInterviewState() {
 
       // Save final resume markdown
       if (updates.resumeWebsitePrompt) {
-        console.log('📊 [InterviewState] Saving final resume to database');
+        console.log('📊 [InterviewState] Triggering saveFinalResume');
         await database.saveFinalResume(email, fullState.resumeWebsitePrompt);
       }
 
