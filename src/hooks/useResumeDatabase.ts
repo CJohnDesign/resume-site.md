@@ -30,9 +30,7 @@ export function useResumeDatabase() {
       hasUrl: !!url,
       hasKey: !!key,
       urlPreview: url ? url.substring(0, 30) + '...' : 'MISSING',
-      keyPreview: key ? key.substring(0, 30) + '...' : 'MISSING',
-      fullUrl: url, // Temporary for debugging
-      fullKey: key ? key.substring(0, 50) + '...' : 'MISSING' // Show more for debugging
+      keyPreview: key ? key.substring(0, 30) + '...' : 'MISSING'
     });
 
     if (url && key) {
@@ -105,7 +103,7 @@ export function useResumeDatabase() {
     }
   };
 
-  const createOrUpdateUser = async (userData: ResumeUserData) => {
+  const createOrUpdateUser = async (userData: ResumeUserData, preserveStep: boolean = false) => {
     return silentDbOperation(async () => {
       console.log('📝 [Database] Creating/updating user with data:', {
         email: userData.email,
@@ -115,7 +113,8 @@ export function useResumeDatabase() {
         hasCareerObjectives: !!userData.career_objectives,
         hasJobExperiences: !!userData.job_experiences,
         hasFinalResume: !!userData.final_resume_markdown,
-        currentStep: userData.current_step
+        currentStep: userData.current_step,
+        preserveStep
       });
       
       // First try to get existing user
@@ -124,14 +123,24 @@ export function useResumeDatabase() {
       if (existingUser) {
         console.log('👤 [Database] User exists, updating...', {
           existingId: existingUser.id,
-          existingStep: existingUser.current_step
+          existingStep: existingUser.current_step,
+          newStep: userData.current_step,
+          preserveStep
         });
-        return await updateUserDirect(userData);
+        
+        // FIXED: If preserveStep is true, don't update the current_step
+        if (preserveStep) {
+          const { current_step, ...userDataWithoutStep } = userData;
+          console.log('🔒 [Database] Preserving existing step:', existingUser.current_step);
+          return await updateUserDirect({ ...userDataWithoutStep, current_step: existingUser.current_step });
+        } else {
+          return await updateUserDirect(userData);
+        }
       } else {
         console.log('👤 [Database] Creating new user...');
         return await createUserDirect(userData);
       }
-    }, 'createOrUpdateUser', { email: userData.email });
+    }, 'createOrUpdateUser', { email: userData.email, preserveStep });
   };
 
   const createUserDirect = async (userData: ResumeUserData) => {
@@ -141,7 +150,12 @@ export function useResumeDatabase() {
       updated_at: new Date().toISOString()
     };
 
-    console.log('📤 [Database] Creating user with payload:', JSON.stringify(payload, null, 2));
+    console.log('📤 [Database] Creating user with payload:', {
+      email: payload.email,
+      name: payload.name,
+      current_step: payload.current_step,
+      hasJobExperiences: !!payload.job_experiences
+    });
 
     const response = await fetch(`${supabaseUrl}/rest/v1/resume_site_users`, {
       method: 'POST',
@@ -157,8 +171,7 @@ export function useResumeDatabase() {
     console.log('📥 [Database] Create response:', {
       status: response.status,
       statusText: response.statusText,
-      ok: response.ok,
-      headers: Object.fromEntries(response.headers.entries())
+      ok: response.ok
     });
 
     if (!response.ok) {
@@ -186,7 +199,12 @@ export function useResumeDatabase() {
       updated_at: new Date().toISOString()
     };
 
-    console.log('📤 [Database] Updating user with payload:', JSON.stringify(payload, null, 2));
+    console.log('📤 [Database] Updating user with payload:', {
+      email: payload.email,
+      name: payload.name,
+      current_step: payload.current_step,
+      hasJobExperiences: !!payload.job_experiences
+    });
 
     const response = await fetch(`${supabaseUrl}/rest/v1/resume_site_users?email=eq.${encodeURIComponent(userData.email)}`, {
       method: 'PATCH',
@@ -202,8 +220,7 @@ export function useResumeDatabase() {
     console.log('📥 [Database] Update response:', {
       status: response.status,
       statusText: response.statusText,
-      ok: response.ok,
-      headers: Object.fromEntries(response.headers.entries())
+      ok: response.ok
     });
 
     if (!response.ok) {
@@ -230,7 +247,6 @@ export function useResumeDatabase() {
       console.log('🔍 [Database] Fetching user:', email);
       
       const url = `${supabaseUrl}/rest/v1/resume_site_users?email=eq.${encodeURIComponent(email)}&select=*`;
-      console.log('🔍 [Database] Fetch URL:', url);
       
       const response = await fetch(url, {
         headers: {
@@ -345,15 +361,16 @@ export function useResumeDatabase() {
       console.log('💾 [Database] Saving job experiences:', {
         totalJobs: Object.keys(currentJobExperiences).length,
         totalReports: Object.keys(currentJobReports).length,
-        currentJobIndex: jobIndex
+        currentJobIndex: jobIndex,
+        preservingStep: true
       });
 
+      // FIXED: Use preserveStep=true to avoid interfering with job loop progression
       return createOrUpdateUser({
         email,
         job_experiences: currentJobExperiences,
-        job_experience_reports: currentJobReports,
-        current_step: 5
-      });
+        job_experience_reports: currentJobReports
+      }, true); // preserveStep = true
     }, 'saveJobExperience', { email, jobIndex });
   };
 

@@ -32,7 +32,8 @@ export function useInterviewState() {
       hasCareerObjectives: !!updates.careerObjectives,
       hasJobExperiences: !!updates.jobExperiences,
       hasFinalResume: !!updates.resumeWebsitePrompt,
-      currentEmail: updates.personalInfo?.email || 'none'
+      currentEmail: updates.personalInfo?.email || 'none',
+      stepUpdate: updates.currentStep
     });
     
     setInterviewState(prev => {
@@ -52,22 +53,33 @@ export function useInterviewState() {
         hasFinalResume: !!newState.resumeWebsitePrompt
       });
 
-      // Trigger database save
-      console.log('🔄 [InterviewState] Triggering database save...');
-      saveToDatabase(newState, updates);
+      // FIXED: Only trigger database save if we're not in the middle of a job loop
+      // This prevents database saves from interfering with the job loop progression
+      const isJobLoopStep = newState.currentStep === 5;
+      const isJobExperienceUpdate = updates.jobExperiences || updates.jobExperienceReports;
+      
+      if (isJobLoopStep && isJobExperienceUpdate) {
+        console.log('🔄 [InterviewState] Job loop update detected - saving to database without step interference');
+        saveToDatabase(newState, updates, true); // preserveStep = true
+      } else {
+        console.log('🔄 [InterviewState] Regular update - saving to database normally');
+        saveToDatabase(newState, updates, false); // preserveStep = false
+      }
       
       return newState;
     });
   };
 
-  const saveToDatabase = async (fullState: InterviewState, updates: Partial<InterviewState>) => {
+  const saveToDatabase = async (fullState: InterviewState, updates: Partial<InterviewState>, preserveStep: boolean = false) => {
     const email = fullState.personalInfo.email;
     
     console.log('📊 [InterviewState] saveToDatabase called:', {
       email: email || 'MISSING',
       updateKeys: Object.keys(updates),
       databaseConnected: database.isConnected,
-      hasName: !!fullState.personalInfo.name
+      hasName: !!fullState.personalInfo.name,
+      preserveStep,
+      currentStep: fullState.currentStep
     });
     
     // Only save if we have an email
@@ -129,7 +141,7 @@ export function useInterviewState() {
 
       // Save job experiences (when individual jobs are updated)
       if (updates.jobExperiences || updates.jobExperienceReports) {
-        console.log('📊 [InterviewState] TRIGGERING saveJobExperience');
+        console.log('📊 [InterviewState] TRIGGERING saveJobExperience with preserveStep:', preserveStep);
         
         // Find which job was updated and save it
         const currentJobs = fullState.jobExperiences || {};
