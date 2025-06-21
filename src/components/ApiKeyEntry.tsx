@@ -30,7 +30,7 @@ export function ApiKeyEntry() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-900 via-black to-gray-800">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-br from-gray-900 via-black to-gray-800">
       <div className="max-w-md w-full">
         <div className="bg-gray-800/50 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-gray-700/50 relative overflow-hidden animate-scale-in">
           {/* Glowing background effect */}
@@ -105,6 +105,22 @@ export function ApiKeyEntry() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Powered by Bolt.new Badge */}
+      <div className="mt-8 animate-slide-in-bottom" style={{ animationDelay: '0.6s' }}>
+        <a 
+          href="https://bolt.new" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="inline-block transition-all duration-300 hover:scale-110 hover:opacity-80"
+        >
+          <img 
+            src="/white_circle_360x360.png" 
+            alt="Powered by Bolt.new" 
+            className="w-16 h-16 opacity-60 hover:opacity-80 transition-opacity duration-300"
+          />
+        </a>
       </div>
     </div>
   );
