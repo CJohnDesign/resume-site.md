@@ -10,13 +10,14 @@ export function ApiKeyEntry() {
   const { hasValidKey, storeApiKey } = useApiKey();
 
   // Animation states
-  const [animationPhase, setAnimationPhase] = useState('idle'); // idle, backflip, typing, backspace, return
+  const [animationPhase, setAnimationPhase] = useState('idle'); // idle, backflip, typing, backspace, typing2, backspace2, return
   const [typedText, setTypedText] = useState('');
   const [showCursor, setShowCursor] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
 
-  const fullText = 'BUILT WITH BOLT';
+  const firstText = 'BUILT WITH BOLT';
+  const secondText = 'CLICK TO BUILD';
 
   // Check if device is desktop (1024px and above)
   useEffect(() => {
@@ -69,9 +70,9 @@ export function ApiKeyEntry() {
         break;
 
       case 'typing':
-        if (typedText.length < fullText.length) {
+        if (typedText.length < firstText.length) {
           timeout = setTimeout(() => {
-            setTypedText(fullText.slice(0, typedText.length + 1));
+            setTypedText(firstText.slice(0, typedText.length + 1));
           }, 60); // Faster typing speed
         } else {
           // Hold for 1 second then start backspacing
@@ -86,6 +87,32 @@ export function ApiKeyEntry() {
           timeout = setTimeout(() => {
             setTypedText(typedText.slice(0, -1));
           }, 30); // Faster backspace speed
+        } else {
+          // Start typing second text
+          timeout = setTimeout(() => {
+            setAnimationPhase('typing2');
+          }, 200); // Brief pause before second text
+        }
+        break;
+
+      case 'typing2':
+        if (typedText.length < secondText.length) {
+          timeout = setTimeout(() => {
+            setTypedText(secondText.slice(0, typedText.length + 1));
+          }, 60); // Same typing speed
+        } else {
+          // Hold for 1 second then start backspacing
+          timeout = setTimeout(() => {
+            setAnimationPhase('backspace2');
+          }, 1000);
+        }
+        break;
+
+      case 'backspace2':
+        if (typedText.length > 0) {
+          timeout = setTimeout(() => {
+            setTypedText(typedText.slice(0, -1));
+          }, 30); // Same backspace speed
         } else {
           // Start return animation
           setShowCursor(false);
@@ -102,7 +129,7 @@ export function ApiKeyEntry() {
     }
 
     return () => clearTimeout(timeout);
-  }, [animationPhase, typedText, fullText, isHovered, isDesktop]);
+  }, [animationPhase, typedText, firstText, secondText, isHovered, isDesktop]);
 
   if (hasValidKey) {
     return <Navigate to="/agent" replace />;
@@ -136,6 +163,11 @@ export function ApiKeyEntry() {
     if (isDesktop) {
       setIsHovered(false);
     }
+  };
+
+  const handleBoltClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    window.open('https://bolt.new', '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -216,17 +248,15 @@ export function ApiKeyEntry() {
         </div>
       </div>
 
-      {/* Animated Bolt Logo Badge - Same width as card, Desktop Only */}
+      {/* Animated Bolt Logo Badge - Same width as card, Desktop Only, Clickable */}
       <div 
-        className="mt-8 relative h-16 flex items-center justify-center max-w-md w-full"
+        className="mt-8 relative h-16 flex items-center justify-center max-w-md w-full cursor-pointer"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onClick={handleBoltClick}
       >
         {/* Logo */}
-        <a 
-          href="https://bolt.new" 
-          target="_blank" 
-          rel="noopener noreferrer"
+        <div
           className={`absolute transition-all duration-300 ${
             animationPhase === 'idle' 
               ? `opacity-85 ${isDesktop ? 'hover:opacity-100 hover:scale-110' : ''}` 
@@ -241,15 +271,15 @@ export function ApiKeyEntry() {
                 ? 'bolt-backflip' 
                 : isDesktop && animationPhase === 'return'
                 ? 'bolt-return'
-                : isDesktop && (animationPhase === 'typing' || animationPhase === 'backspace')
+                : isDesktop && (animationPhase === 'typing' || animationPhase === 'backspace' || animationPhase === 'typing2' || animationPhase === 'backspace2')
                 ? 'opacity-0 invisible'
                 : 'opacity-85'
             }`}
           />
-        </a>
+        </div>
 
         {/* Typing Text - Desktop Only */}
-        {isDesktop && (animationPhase === 'typing' || animationPhase === 'backspace') && (
+        {isDesktop && (animationPhase === 'typing' || animationPhase === 'backspace' || animationPhase === 'typing2' || animationPhase === 'backspace2') && (
           <div className="absolute flex items-center justify-center w-full">
             <span 
               className="text-white font-mono text-sm font-medium tracking-wider whitespace-nowrap"
