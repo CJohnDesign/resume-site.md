@@ -57,27 +57,27 @@ export function ApiKeyEntry() {
         // Start animation when hovered
         timeout = setTimeout(() => {
           setAnimationPhase('backflip');
-        }, 100);
+        }, 50);
         break;
 
       case 'backflip':
-        // After backflip animation completes (1.2s), start typing
+        // After backflip animation completes (0.6s), start typing
         timeout = setTimeout(() => {
           setAnimationPhase('typing');
           setShowCursor(true);
-        }, 1200);
+        }, 600);
         break;
 
       case 'typing':
         if (typedText.length < fullText.length) {
           timeout = setTimeout(() => {
             setTypedText(fullText.slice(0, typedText.length + 1));
-          }, 100); // Typing speed
+          }, 60); // Faster typing speed
         } else {
-          // Hold for 2 seconds then start backspacing
+          // Hold for 1 second then start backspacing
           timeout = setTimeout(() => {
             setAnimationPhase('backspace');
-          }, 2000);
+          }, 1000);
         }
         break;
 
@@ -85,7 +85,7 @@ export function ApiKeyEntry() {
         if (typedText.length > 0) {
           timeout = setTimeout(() => {
             setTypedText(typedText.slice(0, -1));
-          }, 50); // Backspace speed
+          }, 30); // Faster backspace speed
         } else {
           // Start return animation
           setShowCursor(false);
@@ -97,7 +97,7 @@ export function ApiKeyEntry() {
         // Logo returns after text is gone
         timeout = setTimeout(() => {
           setAnimationPhase('idle');
-        }, 800);
+        }, 500);
         break;
     }
 
