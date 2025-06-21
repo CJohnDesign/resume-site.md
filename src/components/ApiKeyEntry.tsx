@@ -14,11 +14,33 @@ export function ApiKeyEntry() {
   const [typedText, setTypedText] = useState('');
   const [showCursor, setShowCursor] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
 
   const fullText = 'BUILT WITH BOLT';
 
+  // Check if device is desktop (1024px and above)
+  useEffect(() => {
+    const checkIsDesktop = () => {
+      setIsDesktop(window.innerWidth >= 1024);
+    };
+
+    checkIsDesktop();
+    window.addEventListener('resize', checkIsDesktop);
+    
+    return () => window.removeEventListener('resize', checkIsDesktop);
+  }, []);
+
   useEffect(() => {
     let timeout: NodeJS.Timeout;
+
+    // Only run animation on desktop
+    if (!isDesktop) {
+      setAnimationPhase('idle');
+      setTypedText('');
+      setShowCursor(false);
+      setIsHovered(false);
+      return;
+    }
 
     if (!isHovered && animationPhase !== 'idle') {
       // Reset animation when not hovered
@@ -80,7 +102,7 @@ export function ApiKeyEntry() {
     }
 
     return () => clearTimeout(timeout);
-  }, [animationPhase, typedText, fullText, isHovered]);
+  }, [animationPhase, typedText, fullText, isHovered, isDesktop]);
 
   if (hasValidKey) {
     return <Navigate to="/agent" replace />;
@@ -100,6 +122,20 @@ export function ApiKeyEntry() {
     }
     
     setIsValidating(false);
+  };
+
+  const handleMouseEnter = () => {
+    // Only enable hover on desktop
+    if (isDesktop) {
+      setIsHovered(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    // Only handle hover on desktop
+    if (isDesktop) {
+      setIsHovered(false);
+    }
   };
 
   return (
@@ -180,11 +216,11 @@ export function ApiKeyEntry() {
         </div>
       </div>
 
-      {/* Animated Bolt Logo Badge - Same width as card */}
+      {/* Animated Bolt Logo Badge - Same width as card, Desktop Only */}
       <div 
         className="mt-8 relative h-16 flex items-center justify-center max-w-md w-full"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         {/* Logo */}
         <a 
@@ -193,7 +229,7 @@ export function ApiKeyEntry() {
           rel="noopener noreferrer"
           className={`absolute transition-all duration-300 ${
             animationPhase === 'idle' 
-              ? 'opacity-85 hover:opacity-100 hover:scale-110' 
+              ? `opacity-85 ${isDesktop ? 'hover:opacity-100 hover:scale-110' : ''}` 
               : 'pointer-events-none'
           }`}
         >
@@ -201,19 +237,19 @@ export function ApiKeyEntry() {
             src="/white_circle_360x360.png" 
             alt="Powered by Bolt.new" 
             className={`w-16 h-16 transition-all duration-300 ${
-              animationPhase === 'backflip' 
+              isDesktop && animationPhase === 'backflip' 
                 ? 'bolt-backflip' 
-                : animationPhase === 'return'
+                : isDesktop && animationPhase === 'return'
                 ? 'bolt-return'
-                : animationPhase === 'typing' || animationPhase === 'backspace'
+                : isDesktop && (animationPhase === 'typing' || animationPhase === 'backspace')
                 ? 'opacity-0 invisible'
                 : 'opacity-85'
             }`}
           />
         </a>
 
-        {/* Typing Text */}
-        {(animationPhase === 'typing' || animationPhase === 'backspace') && (
+        {/* Typing Text - Desktop Only */}
+        {isDesktop && (animationPhase === 'typing' || animationPhase === 'backspace') && (
           <div className="absolute flex items-center justify-center w-full">
             <span 
               className="text-white font-mono text-sm font-medium tracking-wider whitespace-nowrap"
