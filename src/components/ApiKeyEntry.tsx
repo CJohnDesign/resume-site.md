@@ -10,25 +10,34 @@ export function ApiKeyEntry() {
   const { hasValidKey, storeApiKey } = useApiKey();
 
   // Animation states
-  const [animationPhase, setAnimationPhase] = useState('initial'); // initial, backflip, typing, backspace, return
+  const [animationPhase, setAnimationPhase] = useState('idle'); // idle, backflip, typing, backspace, return
   const [typedText, setTypedText] = useState('');
   const [showCursor, setShowCursor] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const fullText = 'BUILT WITH BOLT';
 
   useEffect(() => {
-    // Start the animation sequence after 500ms
-    const startAnimation = setTimeout(() => {
-      setAnimationPhase('backflip');
-    }, 500);
-
-    return () => clearTimeout(startAnimation);
-  }, []);
-
-  useEffect(() => {
     let timeout: NodeJS.Timeout;
 
+    if (!isHovered && animationPhase !== 'idle') {
+      // Reset animation when not hovered
+      setAnimationPhase('idle');
+      setTypedText('');
+      setShowCursor(false);
+      return;
+    }
+
+    if (!isHovered) return;
+
     switch (animationPhase) {
+      case 'idle':
+        // Start animation when hovered
+        timeout = setTimeout(() => {
+          setAnimationPhase('backflip');
+        }, 100);
+        break;
+
       case 'backflip':
         // After backflip animation completes (1.2s), start typing
         timeout = setTimeout(() => {
@@ -65,13 +74,13 @@ export function ApiKeyEntry() {
       case 'return':
         // Logo returns after text is gone
         timeout = setTimeout(() => {
-          setAnimationPhase('complete');
+          setAnimationPhase('idle');
         }, 800);
         break;
     }
 
     return () => clearTimeout(timeout);
-  }, [animationPhase, typedText, fullText]);
+  }, [animationPhase, typedText, fullText, isHovered]);
 
   if (hasValidKey) {
     return <Navigate to="/agent" replace />;
@@ -171,15 +180,19 @@ export function ApiKeyEntry() {
         </div>
       </div>
 
-      {/* Animated Bolt Logo Badge */}
-      <div className="mt-8 relative h-16 flex items-center justify-center">
+      {/* Animated Bolt Logo Badge - Same width as card */}
+      <div 
+        className="mt-8 relative h-16 flex items-center justify-center max-w-md w-full"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
         {/* Logo */}
         <a 
           href="https://bolt.new" 
           target="_blank" 
           rel="noopener noreferrer"
           className={`absolute transition-all duration-300 ${
-            animationPhase === 'initial' || animationPhase === 'complete' 
+            animationPhase === 'idle' 
               ? 'opacity-85 hover:opacity-100 hover:scale-110' 
               : 'pointer-events-none'
           }`}
@@ -192,8 +205,6 @@ export function ApiKeyEntry() {
                 ? 'bolt-backflip opacity-0' 
                 : animationPhase === 'return'
                 ? 'bolt-return opacity-85'
-                : animationPhase === 'complete'
-                ? 'opacity-85'
                 : 'opacity-85'
             }`}
           />
@@ -201,9 +212,9 @@ export function ApiKeyEntry() {
 
         {/* Typing Text */}
         {(animationPhase === 'typing' || animationPhase === 'backspace') && (
-          <div className="absolute flex items-center justify-center">
+          <div className="absolute flex items-center justify-center w-full">
             <span 
-              className="text-white font-mono text-sm font-medium tracking-wider"
+              className="text-white font-mono text-sm font-medium tracking-wider whitespace-nowrap"
               style={{
                 fontFamily: 'Inter, system-ui, sans-serif',
                 fontWeight: 500,
