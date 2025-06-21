@@ -200,11 +200,13 @@ export function ApiKeyEntry() {
           <img 
             src="/white_circle_360x360.png" 
             alt="Powered by Bolt.new" 
-            className={`w-16 h-16 transition-all duration-1200 ${
+            className={`w-16 h-16 transition-all duration-300 ${
               animationPhase === 'backflip' 
-                ? 'bolt-backflip opacity-0' 
+                ? 'bolt-backflip' 
                 : animationPhase === 'return'
-                ? 'bolt-return opacity-85'
+                ? 'bolt-return'
+                : animationPhase === 'typing' || animationPhase === 'backspace'
+                ? 'opacity-0 invisible'
                 : 'opacity-85'
             }`}
           />
