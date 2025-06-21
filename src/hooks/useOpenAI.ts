@@ -57,7 +57,8 @@ export function useOpenAI() {
       conversationHistoryLength: conversationHistory.length,
       hasJobContext: !!additionalContext,
       currentJobTitle: additionalContext?.currentJob?.title,
-      currentJobCompany: additionalContext?.currentJob?.company
+      currentJobCompany: additionalContext?.currentJob?.company,
+      userEmail: interviewState.personalInfo.email // For database context
     });
 
     const apiKey = getApiKey();
@@ -152,7 +153,8 @@ export function useOpenAI() {
             confidence: parsedResponse.confidence,
             hasData: !!parsedResponse.data,
             hasJobExperience: !!parsedResponse.data?.jobExperience,
-            hasJobExperienceReport: !!parsedResponse.data?.jobExperienceReport
+            hasJobExperienceReport: !!parsedResponse.data?.jobExperienceReport,
+            userEmail: interviewState.personalInfo.email
           });
         } catch (parseError) {
           console.error('💥 [OpenAI] JSON parse error:', parseError);
@@ -188,7 +190,8 @@ export function useOpenAI() {
           shouldAdvance: finalResult.shouldAdvance,
           hasStateUpdate: !!finalResult.stateUpdate,
           hasJobExperience: !!finalResult.data?.jobExperience,
-          hasJobExperienceReport: !!finalResult.data?.jobExperienceReport
+          hasJobExperienceReport: !!finalResult.data?.jobExperienceReport,
+          userEmail: interviewState.personalInfo.email
         });
 
         return finalResult;
