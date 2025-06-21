@@ -58,7 +58,7 @@ export function ApiKeyEntry() {
         // Start animation when hovered
         timeout = setTimeout(() => {
           setAnimationPhase('backflip');
-        }, 50);
+        }, 30);
         break;
 
       case 'backflip':
@@ -66,19 +66,19 @@ export function ApiKeyEntry() {
         timeout = setTimeout(() => {
           setAnimationPhase('typing');
           setShowCursor(true);
-        }, 600);
+        }, 400); // Reduced from 600ms
         break;
 
       case 'typing':
         if (typedText.length < firstText.length) {
           timeout = setTimeout(() => {
             setTypedText(firstText.slice(0, typedText.length + 1));
-          }, 60); // Faster typing speed
+          }, 35); // Much faster typing - reduced from 60ms
         } else {
-          // Hold for 1 second then start backspacing
+          // Hold for shorter time then start backspacing
           timeout = setTimeout(() => {
             setAnimationPhase('backspace');
-          }, 1000);
+          }, 600); // Reduced from 1000ms
         }
         break;
 
@@ -86,12 +86,12 @@ export function ApiKeyEntry() {
         if (typedText.length > 0) {
           timeout = setTimeout(() => {
             setTypedText(typedText.slice(0, -1));
-          }, 30); // Faster backspace speed
+          }, 20); // Much faster backspace - reduced from 30ms
         } else {
           // Start typing second text
           timeout = setTimeout(() => {
             setAnimationPhase('typing2');
-          }, 200); // Brief pause before second text
+          }, 100); // Reduced pause from 200ms
         }
         break;
 
@@ -99,12 +99,12 @@ export function ApiKeyEntry() {
         if (typedText.length < secondText.length) {
           timeout = setTimeout(() => {
             setTypedText(secondText.slice(0, typedText.length + 1));
-          }, 60); // Same typing speed
+          }, 35); // Same fast typing speed
         } else {
-          // Hold for 1 second then start backspacing
+          // Hold for shorter time then start backspacing
           timeout = setTimeout(() => {
             setAnimationPhase('backspace2');
-          }, 1000);
+          }, 600); // Reduced from 1000ms
         }
         break;
 
@@ -112,7 +112,7 @@ export function ApiKeyEntry() {
         if (typedText.length > 0) {
           timeout = setTimeout(() => {
             setTypedText(typedText.slice(0, -1));
-          }, 30); // Same backspace speed
+          }, 20); // Same fast backspace speed
         } else {
           // Start return animation
           setShowCursor(false);
@@ -124,7 +124,7 @@ export function ApiKeyEntry() {
         // Logo returns after text is gone
         timeout = setTimeout(() => {
           setAnimationPhase('idle');
-        }, 500);
+        }, 300); // Reduced from 500ms
         break;
     }
 
