@@ -113,12 +113,12 @@ export function ApiKeyEntry() {
           href="https://bolt.new" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="inline-block transition-all duration-300 hover:scale-110 hover:opacity-80"
+          className="inline-block transition-all duration-300 hover:scale-110"
         >
           <img 
             src="/white_circle_360x360.png" 
             alt="Powered by Bolt.new" 
-            className="w-16 h-16 opacity-60 hover:opacity-80 transition-opacity duration-300"
+            className="w-16 h-16 opacity-85 hover:opacity-100 transition-opacity duration-300"
           />
         </a>
       </div>
