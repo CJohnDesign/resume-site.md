@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Key, Lock, ArrowRight, AlertCircle, FileText } from 'lucide-react';
 import { useApiKey } from '../hooks/useApiKey';
@@ -8,6 +8,70 @@ export function ApiKeyEntry() {
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState('');
   const { hasValidKey, storeApiKey } = useApiKey();
+
+  // Animation states
+  const [animationPhase, setAnimationPhase] = useState('initial'); // initial, backflip, typing, backspace, return
+  const [typedText, setTypedText] = useState('');
+  const [showCursor, setShowCursor] = useState(false);
+
+  const fullText = 'BUILT WITH BOLT';
+
+  useEffect(() => {
+    // Start the animation sequence after 500ms
+    const startAnimation = setTimeout(() => {
+      setAnimationPhase('backflip');
+    }, 500);
+
+    return () => clearTimeout(startAnimation);
+  }, []);
+
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+
+    switch (animationPhase) {
+      case 'backflip':
+        // After backflip animation completes (1.2s), start typing
+        timeout = setTimeout(() => {
+          setAnimationPhase('typing');
+          setShowCursor(true);
+        }, 1200);
+        break;
+
+      case 'typing':
+        if (typedText.length < fullText.length) {
+          timeout = setTimeout(() => {
+            setTypedText(fullText.slice(0, typedText.length + 1));
+          }, 100); // Typing speed
+        } else {
+          // Hold for 2 seconds then start backspacing
+          timeout = setTimeout(() => {
+            setAnimationPhase('backspace');
+          }, 2000);
+        }
+        break;
+
+      case 'backspace':
+        if (typedText.length > 0) {
+          timeout = setTimeout(() => {
+            setTypedText(typedText.slice(0, -1));
+          }, 50); // Backspace speed
+        } else {
+          // Start return animation
+          setShowCursor(false);
+          setAnimationPhase('return');
+        }
+        break;
+
+      case 'return':
+        // Logo returns after text is gone
+        timeout = setTimeout(() => {
+          setAnimationPhase('complete');
+        }, 800);
+        break;
+    }
+
+    return () => clearTimeout(timeout);
+  }, [animationPhase, typedText, fullText]);
 
   if (hasValidKey) {
     return <Navigate to="/agent" replace />;
@@ -107,20 +171,53 @@ export function ApiKeyEntry() {
         </div>
       </div>
 
-      {/* Powered by Bolt.new Badge */}
-      <div className="mt-8 animate-slide-in-bottom" style={{ animationDelay: '0.6s' }}>
+      {/* Animated Bolt Logo Badge */}
+      <div className="mt-8 relative h-16 flex items-center justify-center">
+        {/* Logo */}
         <a 
           href="https://bolt.new" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="inline-block transition-all duration-300 hover:scale-110"
+          className={`absolute transition-all duration-300 ${
+            animationPhase === 'initial' || animationPhase === 'complete' 
+              ? 'opacity-85 hover:opacity-100 hover:scale-110' 
+              : 'pointer-events-none'
+          }`}
         >
           <img 
             src="/white_circle_360x360.png" 
             alt="Powered by Bolt.new" 
-            className="w-16 h-16 opacity-85 hover:opacity-100 transition-opacity duration-300"
+            className={`w-16 h-16 transition-all duration-1200 ${
+              animationPhase === 'backflip' 
+                ? 'bolt-backflip opacity-0' 
+                : animationPhase === 'return'
+                ? 'bolt-return opacity-85'
+                : animationPhase === 'complete'
+                ? 'opacity-85'
+                : 'opacity-85'
+            }`}
           />
         </a>
+
+        {/* Typing Text */}
+        {(animationPhase === 'typing' || animationPhase === 'backspace') && (
+          <div className="absolute flex items-center justify-center">
+            <span 
+              className="text-white font-mono text-sm font-medium tracking-wider"
+              style={{
+                fontFamily: 'Inter, system-ui, sans-serif',
+                fontWeight: 500,
+                fontSize: '14px',
+                letterSpacing: '0.05em'
+              }}
+            >
+              {typedText}
+              {showCursor && (
+                <span className="animate-pulse ml-1 text-orange-400">|</span>
+              )}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
