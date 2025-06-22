@@ -15,11 +15,11 @@ interface ClosingScreenProps {
 export function ClosingScreen({ interviewState, onRestartSession }: ClosingScreenProps) {
   const [showBoltModal, setShowBoltModal] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
   const resumeContent = generateResumeWebsitePrompt(interviewState);
 
-  const handleBuildWithBolt = async () => {
+  const handleDownload = async () => {
     try {
-      // Download the file
       const blob = new Blob([resumeContent], { type: 'text/markdown' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -29,14 +29,19 @@ export function ClosingScreen({ interviewState, onRestartSession }: ClosingScree
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-
-      // Show the Bolt modal with instructions
-      setShowBoltModal(true);
+      
+      setDownloaded(true);
+      setTimeout(() => setDownloaded(false), 2000);
     } catch (error) {
       console.error('Error downloading file:', error);
-      // Still show modal even if download fails
-      setShowBoltModal(true);
     }
+  };
+
+  const handleBuildWithBolt = () => {
+    // Encode the resume content as a query parameter and add referral code
+    const encodedPrompt = encodeURIComponent(resumeContent);
+    const boltUrl = `https://bolt.new/?rid=tqid7o&prompt=${encodedPrompt}`;
+    window.open(boltUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handleCopyInstructions = async () => {
@@ -47,13 +52,6 @@ export function ClosingScreen({ interviewState, onRestartSession }: ClosingScree
     } catch (error) {
       console.error('Error copying to clipboard:', error);
     }
-  };
-
-  const handleGoToBolt = () => {
-    // Encode the resume content as a query parameter
-    const encodedPrompt = encodeURIComponent(resumeContent);
-    const boltUrl = `https://bolt.new?prompt=${encodedPrompt}`;
-    window.open(boltUrl, '_blank');
   };
 
   const handleRestartSession = () => {
@@ -149,15 +147,29 @@ export function ClosingScreen({ interviewState, onRestartSession }: ClosingScree
                   <Typography variant="body2" color="muted">Everything needed to build your professional resume site</Typography>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCopyInstructions}
-                leftIcon={copied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                className={copied ? 'text-green-400' : ''}
-              >
-                {copied ? 'Copied!' : 'Copy All'}
-              </Button>
+              
+              {/* Action Buttons */}
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCopyInstructions}
+                  leftIcon={copied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  className={copied ? 'text-green-400' : ''}
+                >
+                  {copied ? 'Copied!' : 'Copy All'}
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDownload}
+                  leftIcon={downloaded ? <CheckCircle className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+                  className={downloaded ? 'text-green-400' : ''}
+                >
+                  {downloaded ? 'Downloaded!' : 'Download'}
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -183,10 +195,13 @@ export function ClosingScreen({ interviewState, onRestartSession }: ClosingScree
                 variant="primary"
                 size="lg"
                 fullWidth
-                leftIcon={<ArrowRight className="w-6 h-6" />}
+                leftIcon={<ExternalLink className="w-6 h-6" />}
               >
                 Build with Bolt
               </Button>
+              <Typography variant="caption" color="muted" className="text-xs">
+                Opens Bolt.new with your resume instructions pre-loaded
+              </Typography>
             </div>
           </div>
         </div>
@@ -197,34 +212,40 @@ export function ClosingScreen({ interviewState, onRestartSession }: ClosingScree
         isOpen={showBoltModal}
         onClose={() => setShowBoltModal(false)}
         size="lg"
-        title="Ready to Build Your Website!"
+        title="Opening Bolt.new"
       >
         {/* Success Header */}
         <div className="text-center mb-8">
           <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-green-500/25">
-            <CheckCircle className="w-10 h-10 text-white" />
+            <ExternalLink className="w-10 h-10 text-white" />
           </div>
         </div>
 
-        {/* What Happened */}
+        {/* What's Happening */}
         <Card variant="glass" padding="md" className="mb-8">
           <CardHeader>
             <CardTitle className="text-lg flex items-center space-x-2">
-              <Download className="w-5 h-5 text-green-400" />
-              <span>What Just Happened:</span>
+              <ExternalLink className="w-5 h-5 text-green-400" />
+              <span>What's Happening:</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center space-x-3">
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
               <Typography variant="body2" color="secondary">
-                ✅ Downloaded your comprehensive website instructions
+                ✅ Your complete resume instructions are being sent to Bolt.new
               </Typography>
             </div>
             <div className="flex items-center space-x-3">
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
               <Typography variant="body2" color="secondary">
-                ✅ Prepared your prompt for Bolt.new with all your career details
+                ✅ Bolt will automatically load your prompt and start building
+              </Typography>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+              <Typography variant="body2" color="secondary">
+                ✅ Your referral credit is included for any Bolt usage
               </Typography>
             </div>
           </CardContent>
@@ -233,25 +254,25 @@ export function ClosingScreen({ interviewState, onRestartSession }: ClosingScree
         {/* Instructions */}
         <Card variant="outlined" padding="md" className="mb-8 border-orange-500/20 bg-orange-500/10">
           <CardHeader>
-            <CardTitle className="text-lg">Next Steps:</CardTitle>
+            <CardTitle className="text-lg">What to Expect:</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-start space-x-3">
               <Typography variant="body2" color="accent" weight="bold">1.</Typography>
               <Typography variant="body2" color="secondary">
-                Click the button below to open Bolt.new with your resume instructions pre-loaded
+                Bolt.new will open in a new tab with your resume instructions pre-loaded
               </Typography>
             </div>
             <div className="flex items-start space-x-3">
               <Typography variant="body2" color="accent" weight="bold">2.</Typography>
               <Typography variant="body2" color="secondary">
-                Your complete website prompt will be automatically loaded into Bolt's input field
+                Bolt's AI will immediately start building your professional resume website
               </Typography>
             </div>
             <div className="flex items-start space-x-3">
               <Typography variant="body2" color="accent" weight="bold">3.</Typography>
               <Typography variant="body2" color="secondary">
-                Let Bolt's AI build your professional resume website with modern styling and responsive design!
+                You'll get a modern, responsive website with dark mode and professional styling!
               </Typography>
             </div>
           </CardContent>
@@ -268,7 +289,7 @@ export function ClosingScreen({ interviewState, onRestartSession }: ClosingScree
           </Button>
           <Button
             variant="primary"
-            onClick={handleGoToBolt}
+            onClick={handleBuildWithBolt}
             leftIcon={<ExternalLink className="w-5 h-5" />}
             fullWidth
           >
