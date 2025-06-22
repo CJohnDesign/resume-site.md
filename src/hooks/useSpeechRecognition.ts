@@ -6,7 +6,8 @@ export function useSpeechRecognition() {
   const [isSupported, setIsSupported] = useState(false);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const isListeningRef = useRef(false); // FIXED: Track listening state to prevent conflicts
+  const isListeningRef = useRef(false);
+  const accumulatedTranscriptRef = useRef(''); // FIXED: Track accumulated transcript
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -24,6 +25,7 @@ export function useSpeechRecognition() {
         console.log('🎤 [SpeechRecognition] Recognition started');
         isListeningRef.current = true;
         setIsListening(true);
+        // FIXED: Don't reset accumulated transcript on restart
       };
 
       recognition.onend = () => {
@@ -42,7 +44,8 @@ export function useSpeechRecognition() {
         let finalTranscript = '';
         let interimTranscript = '';
 
-        for (let i = event.resultIndex; i < event.results.length; i++) {
+        // FIXED: Process all results, not just from resultIndex
+        for (let i = 0; i < event.results.length; i++) {
           const transcriptPart = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
             finalTranscript += transcriptPart;
@@ -53,7 +56,13 @@ export function useSpeechRecognition() {
           }
         }
 
-        const fullTranscript = finalTranscript + interimTranscript;
+        // FIXED: Accumulate final transcript and combine with interim
+        if (finalTranscript) {
+          accumulatedTranscriptRef.current += finalTranscript;
+          console.log('🎤 [SpeechRecognition] Accumulated final transcript:', accumulatedTranscriptRef.current);
+        }
+
+        const fullTranscript = accumulatedTranscriptRef.current + interimTranscript;
         console.log('🎤 [SpeechRecognition] Full transcript updated:', fullTranscript);
         setTranscript(fullTranscript);
       };
@@ -62,6 +71,13 @@ export function useSpeechRecognition() {
         console.error('💥 [SpeechRecognition] Recognition error:', event.error);
         isListeningRef.current = false;
         setIsListening(false);
+        
+        // FIXED: Don't reset accumulated transcript on error unless it's a critical error
+        if (event.error === 'aborted' || event.error === 'audio-capture') {
+          console.log('🎤 [SpeechRecognition] Critical error, resetting transcript');
+          accumulatedTranscriptRef.current = '';
+          setTranscript('');
+        }
       };
 
       recognitionRef.current = recognition;
@@ -81,7 +97,7 @@ export function useSpeechRecognition() {
   const startListening = () => {
     if (recognitionRef.current && !isListeningRef.current) {
       console.log('🎤 [SpeechRecognition] Starting listening...');
-      setTranscript('');
+      // FIXED: Don't reset transcript when starting - preserve accumulated content
       try {
         recognitionRef.current.start();
       } catch (error) {
@@ -114,7 +130,8 @@ export function useSpeechRecognition() {
   };
 
   const resetTranscript = () => {
-    console.log('🔄 [SpeechRecognition] Resetting transcript');
+    console.log('🔄 [SpeechRecognition] Resetting transcript and accumulated content');
+    accumulatedTranscriptRef.current = '';
     setTranscript('');
   };
 

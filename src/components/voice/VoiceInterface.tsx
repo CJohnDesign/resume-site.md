@@ -40,8 +40,10 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
     maxRetries: 3
   });
 
-  // Add ref to track current timeout
+  // FIXED: Add refs to track timeouts and prevent conflicts
   const autoSubmitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTranscriptRef = useRef<string>('');
   
   const { isListening, transcript, startListening, stopListening, resetTranscript } = useSpeechRecognition();
   const { speak, isSpeaking, stop: stopSpeaking } = useSpeechSynthesis();
@@ -141,7 +143,7 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
     }
   }, [hasStarted, isSpeaking, isProcessing, isTransitioning, errorState.hasError, voiceMode, currentStep, isListening, showClosingScreen]);
 
-  // FIXED: Auto-submit with proper cleanup
+  // FIXED: Enhanced auto-submit with better conflict prevention
   useEffect(() => {
     const requiresTextInput = currentStep?.useTextInput;
     
@@ -153,6 +155,8 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
     
     console.log('📝 [VoiceInterface] Auto-submit check:', {
       transcript: transcript.length,
+      lastTranscript: lastTranscriptRef.current.length,
+      transcriptChanged: transcript !== lastTranscriptRef.current,
       isListening,
       isProcessing,
       hasStarted,
@@ -164,7 +168,10 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
       currentStepName: currentStep?.name
     });
     
+    // FIXED: Only set timer if transcript actually changed and has substantial content
     if (transcript && 
+        transcript !== lastTranscriptRef.current && // Transcript changed
+        transcript.trim().length > 10 && // Has substantial content
         isListening && 
         !isProcessing && 
         hasStarted && 
@@ -175,16 +182,18 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
         !showClosingScreen &&
         currentStep?.name !== 'closing') {
       
-      console.log('⏱️ [VoiceInterface] Setting auto-submit timer for 3 seconds...');
+      console.log('⏱️ [VoiceInterface] Setting auto-submit timer for 4 seconds (transcript changed)...');
+      lastTranscriptRef.current = transcript;
+      
       autoSubmitTimeoutRef.current = setTimeout(() => {
-        if (!isSpeaking && !showClosingScreen && !isTransitioning) {
+        if (!isSpeaking && !showClosingScreen && !isTransitioning && isListening) {
           console.log('🚀 [VoiceInterface] Auto-submitting transcript:', transcript);
           handleVoiceSubmit();
         } else {
           console.log('🛑 [VoiceInterface] Auto-submit cancelled - conditions changed');
         }
         autoSubmitTimeoutRef.current = null;
-      }, 3000);
+      }, 4000); // FIXED: Increased to 4 seconds for longer responses
     }
 
     // Cleanup function
@@ -244,7 +253,13 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
     
     stopListening();
     stopSpeaking();
-    setIsTransitioning(false); // FIXED: Reset transition state on error
+    setIsTransitioning(false);
+    
+    // FIXED: Clear timeouts on error
+    if (autoSubmitTimeoutRef.current) {
+      clearTimeout(autoSubmitTimeoutRef.current);
+      autoSubmitTimeoutRef.current = null;
+    }
     
     setErrorState(prev => {
       const newRetryCount = prev.retryCount + 1;
@@ -274,7 +289,7 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
   const handleRetry = () => {
     console.log('🔄 [VoiceInterface] Handling retry request');
     setErrorState(prev => ({ ...prev, hasError: false, message: '' }));
-    setIsTransitioning(false); // FIXED: Reset transition state on retry
+    setIsTransitioning(false);
     
     if (transcript && hasStarted) {
       console.log('🔄 [VoiceInterface] Retrying voice submit with transcript:', transcript);
@@ -366,6 +381,7 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
     console.log('🚀 [VoiceInterface] Processing voice response:', transcript.trim());
     await processResponse(transcript.trim());
     resetTranscript();
+    lastTranscriptRef.current = ''; // FIXED: Reset tracking ref
   };
 
   const handleTextSubmit = async () => {
@@ -418,7 +434,13 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
     stopListening();
     stopSpeaking();
     setIsProcessing(true);
-    setIsTransitioning(true); // FIXED: Set transition state at start
+    setIsTransitioning(true);
+
+    // FIXED: Clear auto-submit timer when processing starts
+    if (autoSubmitTimeoutRef.current) {
+      clearTimeout(autoSubmitTimeoutRef.current);
+      autoSubmitTimeoutRef.current = null;
+    }
 
     try {
       console.log('🤖 [VoiceInterface] Calling OpenAI API...');
