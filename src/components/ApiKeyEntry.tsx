@@ -167,7 +167,7 @@ export function ApiKeyEntry() {
 
   const handleBoltClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    window.open('https://bolt.new', '_blank', 'noopener,noreferrer');
+    window.open('https://bolt.new/?rid=tqid7o', '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -189,7 +189,7 @@ export function ApiKeyEntry() {
             <p className="text-gray-400 leading-relaxed transition-colors">
               Enter your OpenAI API key to begin building your resume through intelligent conversation with{' '}
               <a 
-                href="https://bolt.new" 
+                href="https://bolt.new/?rid=tqid7o" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-orange-400 hover:text-orange-300 underline transition-all duration-300"
