@@ -259,7 +259,7 @@ export function ApiKeyEntry() {
         <div
           className={`absolute transition-all duration-300 ${
             animationPhase === 'idle' 
-              ? `opacity-85 ${isDesktop ? 'hover:opacity-100 hover:scale-110' : ''}` 
+              ? `${isDesktop ? 'hover:opacity-100 hover:scale-110' : ''} ${!isHovered ? 'bolt-pulse-glow' : ''}` 
               : 'pointer-events-none'
           }`}
         >
@@ -273,7 +273,7 @@ export function ApiKeyEntry() {
                 ? 'bolt-return'
                 : isDesktop && (animationPhase === 'typing' || animationPhase === 'backspace' || animationPhase === 'typing2' || animationPhase === 'backspace2')
                 ? 'opacity-0 invisible'
-                : 'opacity-85'
+                : ''
             }`}
           />
         </div>

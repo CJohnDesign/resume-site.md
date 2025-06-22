@@ -21,6 +21,59 @@
   background: linear-gradient(to bottom, #ea580c, #dc2626);
 }
 
+/* Bolt Logo Animations - Single Flip, Faster */
+@keyframes bolt-backflip {
+  0% {
+    transform: rotateY(0deg) scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: rotateY(180deg) scale(1.1);
+    opacity: 0.2;
+  }
+  100% {
+    transform: rotateY(360deg) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes bolt-return {
+  0% {
+    transform: rotateY(0deg) scale(1);
+    opacity: 0;
+  }
+  50% {
+    transform: rotateY(180deg) scale(1.1);
+    opacity: 0.4;
+  }
+  100% {
+    transform: rotateY(360deg) scale(1);
+    opacity: 0.85;
+  }
+}
+
+/* Subtle pulsing glow animation for Bolt emblem */
+@keyframes bolt-pulse-glow {
+  0%, 100% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 0.98;
+  }
+}
+
+.bolt-backflip {
+  animation: bolt-backflip 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.bolt-return {
+  animation: bolt-return 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.bolt-pulse-glow {
+  animation: bolt-pulse-glow 3s ease-in-out infinite;
+}
+
 /* Enhanced smooth animations */
 @keyframes fade-in {
   from {
@@ -83,45 +136,6 @@
 
 .animate-scale-in {
   animation: scale-in 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-/* Bolt Logo Animations - Single Flip, Faster */
-@keyframes bolt-backflip {
-  0% {
-    transform: rotateY(0deg) scale(1);
-    opacity: 0.85;
-  }
-  50% {
-    transform: rotateY(180deg) scale(1.1);
-    opacity: 0.2;
-  }
-  100% {
-    transform: rotateY(360deg) scale(1);
-    opacity: 0;
-  }
-}
-
-@keyframes bolt-return {
-  0% {
-    transform: rotateY(0deg) scale(1);
-    opacity: 0;
-  }
-  50% {
-    transform: rotateY(180deg) scale(1.1);
-    opacity: 0.4;
-  }
-  100% {
-    transform: rotateY(360deg) scale(1);
-    opacity: 0.85;
-  }
-}
-
-.bolt-backflip {
-  animation: bolt-backflip 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-.bolt-return {
-  animation: bolt-return 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 /* Glow effects */
