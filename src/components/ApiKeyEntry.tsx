@@ -273,7 +273,7 @@ export function ApiKeyEntry() {
         >
           <img 
             src="/white_circle_360x360.png" 
-            alt="Powered by Bolt.new" 
+            alt="Built with Bolt" 
             className={`w-16 h-16 transition-all duration-300 ${
               isDesktop && animationPhase === 'backflip' 
                 ? 'bolt-backflip' 
