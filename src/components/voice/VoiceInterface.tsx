@@ -42,7 +42,6 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
 
   // FIXED: Add refs to track timeouts and prevent conflicts
   const autoSubmitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastTranscriptRef = useRef<string>('');
   
   const { isListening, transcript, startListening, stopListening, resetTranscript } = useSpeechRecognition();

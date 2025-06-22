@@ -95,11 +95,12 @@ function generateCareerSection(state: InterviewState): string {
 }
 
 function generateExperienceSection(state: InterviewState): string {
-  // Use detailed job experience reports if available
+  // FIXED: Use detailed job experience reports if available with proper error handling
   if (state.jobExperienceReports && Object.keys(state.jobExperienceReports).length > 0) {
-    const reports = Object.values(state.jobExperienceReports);
+    const reports = Object.values(state.jobExperienceReports).filter(report => report && report.jobTitle);
     
-    return reports.map(report => `
+    if (reports.length > 0) {
+      return reports.map(report => `
 **${report.jobTitle}** | ${report.company}
 *${report.duration}*
 
@@ -110,6 +111,23 @@ ${report.keyAchievements.map(achievement => `• ${achievement}`).join('\n')}
 
 Skills: ${report.skillsDeveloped.join(', ')}
 `).join('\n---\n');
+    }
+  }
+
+  // FIXED: Use basic job experiences if available with proper error handling
+  if (state.jobExperiences && Object.keys(state.jobExperiences).length > 0) {
+    const experiences = Object.values(state.jobExperiences).filter(exp => exp && exp.jobTitle);
+    
+    if (experiences.length > 0) {
+      return experiences.map(exp => `
+**${exp.jobTitle}** | ${exp.company}
+*${exp.duration}*
+
+${exp.achievements || 'Key responsibilities and achievements in this role.'}
+
+${exp.skills ? `Skills: ${exp.skills}` : ''}
+`).join('\n---\n');
+    }
   }
 
   // Fallback to LinkedIn data
@@ -144,11 +162,13 @@ function generateSkillsSection(state: InterviewState): string {
     skills += `**Technical Skills:** ${state.linkedinParsedData.skills.join(', ')}\n\n`;
   }
   
-  // Add skills from job reports
+  // Add skills from job reports with error handling
   if (state.jobExperienceReports && Object.keys(state.jobExperienceReports).length > 0) {
     const allSkills = new Set<string>();
     Object.values(state.jobExperienceReports).forEach(report => {
-      report.skillsDeveloped.forEach(skill => allSkills.add(skill));
+      if (report && report.skillsDeveloped && Array.isArray(report.skillsDeveloped)) {
+        report.skillsDeveloped.forEach(skill => allSkills.add(skill));
+      }
     });
     
     if (allSkills.size > 0) {

@@ -79,6 +79,7 @@ export function useJobExperienceLoop(interviewState: InterviewState) {
       hasMoreJobs: loopState.currentJobIndex < loopState.totalJobsToDiscuss - 1
     });
     
+    // FIXED: Check if we have more jobs to discuss
     if (loopState.currentJobIndex < loopState.totalJobsToDiscuss - 1) {
       const nextIndex = loopState.currentJobIndex + 1;
       const nextJob = loopState.jobsToDiscuss[nextIndex];
