@@ -311,28 +311,7 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
     });
 
     if (!hasStarted) {
-      console.log('🚀 [VoiceInterface] Starting interview for the first time');
-      setHasStarted(true);
-      setIsActive(true);
-      setShowSubtitle(false);
-      setErrorState({ hasError: false, message: '', retryCount: 0, maxRetries: 3 });
-      
-      // FIXED: Always speak the initialMessage first (only for welcome step)
-      if (currentStep?.name === 'welcome' && currentStep.initialMessage) {
-        const welcomeMessage = currentStep.initialMessage;
-        console.log('🗣️ [VoiceInterface] Speaking WELCOME initial message:', welcomeMessage);
-        speak(welcomeMessage);
-        setConversationLog([{ type: 'assistant', content: welcomeMessage }]);
-      } else {
-        // Fallback message if no initial message
-        const fallbackMessage = "Hi! Let's create your resume together. What's your full name?";
-        console.log('🗣️ [VoiceInterface] Speaking fallback welcome message:', fallbackMessage);
-        speak(fallbackMessage);
-        setConversationLog([{ type: 'assistant', content: fallbackMessage }]);
-      }
-      
-      onUpdateState({ currentStep: currentStep?.id || 0 });
-      
+      startInterview();
     } else if (isListening && voiceMode) {
       console.log('⏸️ [VoiceInterface] Pausing listening (was listening in voice mode)');
       stopListening();
@@ -354,6 +333,37 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
         startListening();
       }
     }
+  };
+
+  // FIXED: Extract interview start logic to reuse for subtitle click
+  const startInterview = () => {
+    console.log('🚀 [VoiceInterface] Starting interview');
+    setHasStarted(true);
+    setIsActive(true);
+    setShowSubtitle(false);
+    setErrorState({ hasError: false, message: '', retryCount: 0, maxRetries: 3 });
+    
+    // FIXED: Always speak the initialMessage first (only for welcome step)
+    if (currentStep?.name === 'welcome' && currentStep.initialMessage) {
+      const welcomeMessage = currentStep.initialMessage;
+      console.log('🗣️ [VoiceInterface] Speaking WELCOME initial message:', welcomeMessage);
+      speak(welcomeMessage);
+      setConversationLog([{ type: 'assistant', content: welcomeMessage }]);
+    } else {
+      // Fallback message if no initial message
+      const fallbackMessage = "Hi! Let's create your resume together. What's your full name?";
+      console.log('🗣️ [VoiceInterface] Speaking fallback welcome message:', fallbackMessage);
+      speak(fallbackMessage);
+      setConversationLog([{ type: 'assistant', content: fallbackMessage }]);
+    }
+    
+    onUpdateState({ currentStep: currentStep?.id || 0 });
+  };
+
+  // FIXED: Handle subtitle click to start interview
+  const handleSubtitleClick = () => {
+    console.log('🔘 [VoiceInterface] Subtitle clicked - starting interview');
+    startInterview();
   };
 
   const handleTextModeToggle = () => {
@@ -726,7 +736,10 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
             disabled={isProcessing || isTransitioning || errorState.hasError}
           />
           
-          <WelcomeSubtitle isVisible={showSubtitle && !hasStarted} />
+          <WelcomeSubtitle 
+            isVisible={showSubtitle && !hasStarted} 
+            onClick={handleSubtitleClick}
+          />
           
           <AudioVisualization isVisible={buttonState === 'speaking'} />
         </div>
