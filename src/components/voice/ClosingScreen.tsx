@@ -17,7 +17,7 @@ export function ClosingScreen({ interviewState, onRestartSession }: ClosingScree
   const [copied, setCopied] = useState(false);
   const resumeContent = generateResumeWebsitePrompt(interviewState);
 
-  const handleStartBuilding = async () => {
+  const handleBuildWithBolt = async () => {
     try {
       // Download the file
       const blob = new Blob([resumeContent], { type: 'text/markdown' });
@@ -30,14 +30,11 @@ export function ClosingScreen({ interviewState, onRestartSession }: ClosingScree
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      // Copy to clipboard
-      await navigator.clipboard.writeText(resumeContent);
-      
-      // Show the Bolt modal
+      // Show the Bolt modal with instructions
       setShowBoltModal(true);
     } catch (error) {
-      console.error('Error copying to clipboard:', error);
-      // Still show modal even if clipboard fails
+      console.error('Error downloading file:', error);
+      // Still show modal even if download fails
       setShowBoltModal(true);
     }
   };
@@ -53,7 +50,10 @@ export function ClosingScreen({ interviewState, onRestartSession }: ClosingScree
   };
 
   const handleGoToBolt = () => {
-    window.open('https://bolt.new', '_blank');
+    // Encode the resume content as a query parameter
+    const encodedPrompt = encodeURIComponent(resumeContent);
+    const boltUrl = `https://bolt.new?prompt=${encodedPrompt}`;
+    window.open(boltUrl, '_blank');
   };
 
   const handleRestartSession = () => {
@@ -172,20 +172,20 @@ export function ClosingScreen({ interviewState, onRestartSession }: ClosingScree
             </div>
           </div>
 
-          {/* Footer - Fixed Download Button */}
+          {/* Footer - Fixed Build Button */}
           <div className="bg-gray-800/50 px-8 py-6 border-t border-gray-700/50 flex-shrink-0">
             <div className="text-center space-y-4">
               <Typography variant="h6" color="muted">
                 Ready to build your professional resume website?
               </Typography>
               <Button
-                onClick={handleStartBuilding}
+                onClick={handleBuildWithBolt}
                 variant="primary"
                 size="lg"
                 fullWidth
                 leftIcon={<ArrowRight className="w-6 h-6" />}
               >
-                Download & Build with AI
+                Build with Bolt
               </Button>
             </div>
           </div>
@@ -210,7 +210,7 @@ export function ClosingScreen({ interviewState, onRestartSession }: ClosingScree
         <Card variant="glass" padding="md" className="mb-8">
           <CardHeader>
             <CardTitle className="text-lg flex items-center space-x-2">
-              <Copy className="w-5 h-5 text-green-400" />
+              <Download className="w-5 h-5 text-green-400" />
               <span>What Just Happened:</span>
             </CardTitle>
           </CardHeader>
@@ -224,9 +224,8 @@ export function ClosingScreen({ interviewState, onRestartSession }: ClosingScree
             <div className="flex items-center space-x-3">
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
               <Typography variant="body2" color="secondary">
-                ✅ Copied the complete design brief to your clipboard
+                ✅ Prepared your prompt for Bolt.new with all your career details
               </Typography>
-            
             </div>
           </CardContent>
         </Card>
@@ -240,13 +239,13 @@ export function ClosingScreen({ interviewState, onRestartSession }: ClosingScree
             <div className="flex items-start space-x-3">
               <Typography variant="body2" color="accent" weight="bold">1.</Typography>
               <Typography variant="body2" color="secondary">
-                Click the button below to open Bolt.new
+                Click the button below to open Bolt.new with your resume instructions pre-loaded
               </Typography>
             </div>
             <div className="flex items-start space-x-3">
               <Typography variant="body2" color="accent" weight="bold">2.</Typography>
               <Typography variant="body2" color="secondary">
-                Paste your website instructions into the text box (Ctrl+V or Cmd+V)
+                Your complete website prompt will be automatically loaded into Bolt's input field
               </Typography>
             </div>
             <div className="flex items-start space-x-3">
