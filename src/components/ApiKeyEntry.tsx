@@ -187,7 +187,15 @@ export function ApiKeyEntry() {
               </span>
             </h1>
             <p className="text-gray-400 leading-relaxed transition-colors">
-              Enter your OpenAI API key to begin building your resume through intelligent conversation with <a href="https:llbolt.new">Bolt</a>.
+              Enter your OpenAI API key to begin building your resume through intelligent conversation with{' '}
+              <a 
+                href="https://bolt.new" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-orange-400 hover:text-orange-300 underline transition-all duration-300"
+              >
+                Bolt
+              </a>.
             </p>
           </div>
 
