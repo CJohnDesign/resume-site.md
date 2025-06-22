@@ -17,7 +17,7 @@ export function Footer() {
             </a>
           </div>
           <div className="transition-all hover:text-gray-300">
-            Powered by{' '}
+            Built with{' '}
             <a 
               href="https://bolt.new/?rid=tqid7o" 
               target="_blank" 
