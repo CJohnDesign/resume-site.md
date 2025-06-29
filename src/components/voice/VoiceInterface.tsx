@@ -9,6 +9,7 @@ import { VoiceStatusBar } from './VoiceStatusBar';
 import { VoiceButton } from './VoiceButton';
 import { AudioVisualization } from './AudioVisualization';
 import { WelcomeSubtitle } from './WelcomeSubtitle';
+import { ContinueButton } from './ContinueButton';
 import { ClosingScreen } from './ClosingScreen';
 import { VoiceToolbar } from './VoiceToolbar';
 import { generateResumeWebsitePrompt } from '../../utils/resumeGenerator';
@@ -28,6 +29,7 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
   const [showClosingScreen, setShowClosingScreen] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [voiceMode, setVoiceMode] = useState(true);
+  const [showContinueButton, setShowContinueButton] = useState(false);
   const [errorState, setErrorState] = useState<{
     hasError: boolean;
     message: string;
@@ -87,10 +89,37 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
     }
   }, [hasStarted]);
 
+  // Show continue button after first AI response in career objectives and job experience steps
+  useEffect(() => {
+    const shouldShowButton = hasStarted && 
+                            conversationLog.length >= 2 && // At least one user input and one AI response
+                            (currentStep?.name === 'career-objectives' || currentStep?.name === 'job-experience-loop') &&
+                            !isProcessing &&
+                            !isTransitioning &&
+                            !isSpeaking &&
+                            !showClosingScreen;
+
+    console.log('🔘 [VoiceInterface] Continue button visibility check:', {
+      shouldShowButton,
+      hasStarted,
+      conversationLength: conversationLog.length,
+      currentStepName: currentStep?.name,
+      isProcessing,
+      isTransitioning,
+      isSpeaking,
+      showClosingScreen
+    });
+
+    setShowContinueButton(shouldShowButton);
+  }, [hasStarted, conversationLog.length, currentStep?.name, isProcessing, isTransitioning, isSpeaking, showClosingScreen]);
+
   // CRITICAL: Handle step changes and text input requirements
   useEffect(() => {
     if (currentStep) {
       console.log('🎯 [VoiceInterface] Step changed to:', currentStep.name, 'useTextInput:', currentStep.useTextInput);
+      
+      // Hide continue button when step changes
+      setShowContinueButton(false);
       
       if (currentStep.useTextInput) {
         console.log('🎯 [VoiceInterface] Step requires text input - switching to text mode');
@@ -378,6 +407,16 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
   const handleSubtitleClick = () => {
     console.log('🔘 [VoiceInterface] Subtitle clicked - starting interview');
     startInterview();
+  };
+
+  // Handle continue button click
+  const handleContinueClick = async () => {
+    console.log('🔘 [VoiceInterface] Continue button clicked');
+    setShowContinueButton(false);
+    
+    const continueMessage = "I would like to move on to the next section, please.";
+    console.log('🚀 [VoiceInterface] Processing continue request:', continueMessage);
+    await processResponse(continueMessage);
   };
 
   const handleTextModeToggle = () => {
@@ -702,7 +741,8 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
     isLoopActive,
     currentJobIndex: loopState.currentJobIndex,
     actualJobIndex,
-    currentJobTitle: currentJob?.title
+    currentJobTitle: currentJob?.title,
+    showContinueButton
   });
 
   return (
@@ -758,6 +798,12 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
           <WelcomeSubtitle 
             isVisible={showSubtitle && !hasStarted} 
             onClick={handleSubtitleClick}
+          />
+          
+          <ContinueButton
+            isVisible={showContinueButton}
+            onClick={handleContinueClick}
+            disabled={isProcessing || isTransitioning || errorState.hasError}
           />
           
           <AudioVisualization isVisible={buttonState === 'speaking'} />
