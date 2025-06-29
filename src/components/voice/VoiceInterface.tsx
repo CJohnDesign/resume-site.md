@@ -45,6 +45,7 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
   // FIXED: Add refs to track timeouts and prevent conflicts
   const autoSubmitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastTranscriptRef = useRef<string>('');
+  const processingLockRef = useRef<boolean>(false); // NEW: Prevent concurrent processing
   
   const { isListening, transcript, startListening, stopListening, resetTranscript } = useSpeechRecognition();
   const { speak, isSpeaking, stop: stopSpeaking } = useSpeechSynthesis();
@@ -58,7 +59,7 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
     canMoveToNextStep 
   } = useStepController(interviewState);
 
-  // Job Experience Loop Integration
+  // Job Experience Loop Integration with enhanced state tracking
   const {
     loopState,
     moveToNextJob,
@@ -71,7 +72,8 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
     currentJob,
     hasMoreJobs,
     getJobLoopContext,
-    actualJobIndex
+    actualJobIndex,
+    isTransitioning: jobLoopTransitioning // NEW: Track job loop transitions
   } = useJobExperienceLoop(interviewState);
 
   // Show subtitle after 3 seconds if user hasn't started
@@ -97,7 +99,8 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
                             !isProcessing &&
                             !isTransitioning &&
                             !isSpeaking &&
-                            !showClosingScreen;
+                            !showClosingScreen &&
+                            !jobLoopTransitioning; // NEW: Don't show during job transitions
 
     console.log('🔘 [VoiceInterface] Continue button visibility check:', {
       shouldShowButton,
@@ -107,11 +110,12 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
       isProcessing,
       isTransitioning,
       isSpeaking,
-      showClosingScreen
+      showClosingScreen,
+      jobLoopTransitioning
     });
 
     setShowContinueButton(shouldShowButton);
-  }, [hasStarted, conversationLog.length, currentStep?.name, isProcessing, isTransitioning, isSpeaking, showClosingScreen]);
+  }, [hasStarted, conversationLog.length, currentStep?.name, isProcessing, isTransitioning, isSpeaking, showClosingScreen, jobLoopTransitioning]);
 
   // CRITICAL: Handle step changes and text input requirements
   useEffect(() => {
@@ -145,7 +149,8 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
       voiceMode,
       requiresTextInput,
       showClosingScreen,
-      currentStepName: currentStep?.name
+      currentStepName: currentStep?.name,
+      jobLoopTransitioning
     });
     
     if (hasStarted && 
@@ -156,6 +161,7 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
         voiceMode && 
         !requiresTextInput &&
         !showClosingScreen &&
+        !jobLoopTransitioning && // NEW: Don't start listening during job transitions
         currentStep?.name !== 'closing') {
       
       console.log('🎤 [VoiceInterface] Starting auto-listening in 500ms...');
@@ -169,7 +175,7 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
       console.log('🛑 [VoiceInterface] CRITICAL: AI started speaking, stopping listening immediately');
       stopListening();
     }
-  }, [hasStarted, isSpeaking, isProcessing, isTransitioning, errorState.hasError, voiceMode, currentStep, isListening, showClosingScreen]);
+  }, [hasStarted, isSpeaking, isProcessing, isTransitioning, errorState.hasError, voiceMode, currentStep, isListening, showClosingScreen, jobLoopTransitioning]);
 
   // FIXED: Enhanced auto-submit with better conflict prevention
   useEffect(() => {
@@ -193,7 +199,8 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
       requiresTextInput,
       isSpeaking,
       showClosingScreen,
-      currentStepName: currentStep?.name
+      currentStepName: currentStep?.name,
+      jobLoopTransitioning
     });
     
     // FIXED: Only set timer if transcript actually changed and has substantial content
@@ -208,20 +215,21 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
         !requiresTextInput &&
         !isSpeaking &&
         !showClosingScreen &&
+        !jobLoopTransitioning && // NEW: Don't auto-submit during job transitions
         currentStep?.name !== 'closing') {
       
       console.log('⏱️ [VoiceInterface] Setting auto-submit timer for 4 seconds (transcript changed)...');
       lastTranscriptRef.current = transcript;
       
       autoSubmitTimeoutRef.current = setTimeout(() => {
-        if (!isSpeaking && !showClosingScreen && !isTransitioning && isListening) {
+        if (!isSpeaking && !showClosingScreen && !isTransitioning && isListening && !jobLoopTransitioning) {
           console.log('🚀 [VoiceInterface] Auto-submitting transcript:', transcript);
           handleVoiceSubmit();
         } else {
           console.log('🛑 [VoiceInterface] Auto-submit cancelled - conditions changed');
         }
         autoSubmitTimeoutRef.current = null;
-      }, 4000); // FIXED: Increased to 4 seconds for longer responses
+      }, 4000);
     }
 
     // Cleanup function
@@ -232,7 +240,7 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
         autoSubmitTimeoutRef.current = null;
       }
     };
-  }, [transcript, isListening, isProcessing, hasStarted, isTransitioning, voiceMode, currentStep, isSpeaking, showClosingScreen]);
+  }, [transcript, isListening, isProcessing, hasStarted, isTransitioning, voiceMode, currentStep, isSpeaking, showClosingScreen, jobLoopTransitioning]);
 
   // Show closing screen when we reach the closing step
   useEffect(() => {
@@ -287,6 +295,7 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
     stopListening();
     stopSpeaking();
     setIsTransitioning(false);
+    processingLockRef.current = false; // NEW: Release processing lock
     
     // FIXED: Clear timeouts on error
     if (autoSubmitTimeoutRef.current) {
@@ -323,6 +332,7 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
     console.log('🔄 [VoiceInterface] Handling retry request');
     setErrorState(prev => ({ ...prev, hasError: false, message: '' }));
     setIsTransitioning(false);
+    processingLockRef.current = false; // NEW: Release processing lock
     
     if (transcript && hasStarted) {
       console.log('🔄 [VoiceInterface] Retrying voice submit with transcript:', transcript);
@@ -433,10 +443,11 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
       currentStep: currentStep?.name,
       isSpeaking,
       showClosingScreen,
-      isTransitioning
+      isTransitioning,
+      processingLocked: processingLockRef.current
     });
 
-    if (!transcript.trim() || isProcessing || !currentStep || isSpeaking || showClosingScreen || isTransitioning) {
+    if (!transcript.trim() || isProcessing || !currentStep || isSpeaking || showClosingScreen || isTransitioning || processingLockRef.current) {
       console.log('🛑 [VoiceInterface] Voice submit blocked - invalid conditions');
       return;
     }
@@ -451,10 +462,11 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
     console.log('📝 [VoiceInterface] Text submit called:', {
       textInput: textInput.trim(),
       isProcessing,
-      currentStep: currentStep?.name
+      currentStep: currentStep?.name,
+      processingLocked: processingLockRef.current
     });
 
-    if (!textInput.trim() || isProcessing || !currentStep) {
+    if (!textInput.trim() || isProcessing || !currentStep || processingLockRef.current) {
       console.log('🛑 [VoiceInterface] Text submit blocked - invalid conditions');
       return;
     }
@@ -474,6 +486,12 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
   const processResponse = async (userMessage: string) => {
     if (!currentStep) {
       console.log('🛑 [VoiceInterface] Process response blocked - no current step');
+      return;
+    }
+    
+    // NEW: Prevent concurrent processing
+    if (processingLockRef.current) {
+      console.log('🛑 [VoiceInterface] Process response blocked - already processing');
       return;
     }
     
@@ -498,6 +516,7 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
     stopSpeaking();
     setIsProcessing(true);
     setIsTransitioning(true);
+    processingLockRef.current = true; // NEW: Set processing lock
 
     // FIXED: Clear auto-submit timer when processing starts
     if (autoSubmitTimeoutRef.current) {
@@ -669,6 +688,7 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
     } finally {
       console.log('🏁 [VoiceInterface] Processing complete, setting isProcessing to false');
       setIsProcessing(false);
+      processingLockRef.current = false; // NEW: Release processing lock
     }
   };
 
@@ -742,7 +762,8 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
     currentJobIndex: loopState.currentJobIndex,
     actualJobIndex,
     currentJobTitle: currentJob?.title,
-    showContinueButton
+    showContinueButton,
+    jobLoopTransitioning
   });
 
   return (
@@ -758,7 +779,8 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
           isActive: isLoopActive,
           currentJobIndex: loopState.currentJobIndex,
           totalJobs: loopState.totalJobsToDiscuss,
-          progressMessage: getProgressMessage()
+          progressMessage: getProgressMessage(),
+          isTransitioning: jobLoopTransitioning // NEW: Pass transition state
         } : undefined}
       />
 
