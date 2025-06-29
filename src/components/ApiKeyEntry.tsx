@@ -170,6 +170,11 @@ export function ApiKeyEntry() {
     window.open('https://bolt.new/?rid=tqid7o', '_blank', 'noopener,noreferrer');
   };
 
+  const handleTestKeyClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    // Do nothing for now
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-br from-gray-900 via-black to-gray-800">
       <div className="max-w-md w-full">
@@ -252,6 +257,17 @@ export function ApiKeyEntry() {
                 </p>
               </div>
             </div>
+          </div>
+
+          {/* Test API Key Link */}
+          <div className="mt-6 text-center relative z-10 animate-slide-in-bottom" style={{ animationDelay: '0.6s' }}>
+            <a
+              href="#"
+              onClick={handleTestKeyClick}
+              className="text-orange-400 hover:text-orange-300 text-sm font-medium transition-all duration-300 hover:underline"
+            >
+              no api key, use ours
+            </a>
           </div>
         </div>
       </div>
