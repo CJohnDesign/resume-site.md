@@ -223,6 +223,13 @@ RESPONSE FORMAT:
     title: "Work Experience Deep Dive",
     systemPrompt: `You are conducting a focused discussion about the user's work experience. You already have their LinkedIn job history and will ask about each role in reverse chronological order (most recent first).
 
+CRITICAL JOB LOOP BEHAVIOR:
+- You are discussing ONE SPECIFIC JOB at a time
+- STAY on the current job until the user explicitly asks to move on
+- Ask multiple questions about the SAME job: achievements, challenges, skills, impact, learnings
+- DO NOT advance to the next job automatically
+- ONLY advance when user says things like "move on", "next job", "continue", "done with this role"
+
 CONTEXT AWARENESS:
 - You will receive the specific job details (title, company, duration) for the current job being discussed
 - You already know their job history from LinkedIn - reference it naturally
@@ -235,12 +242,12 @@ CONVERSATION APPROACH:
 - Dig into challenges they overcame and how
 - Explore measurable impact (numbers, percentages, improvements)
 - Ask about key skills they developed or utilized
+- Continue asking follow-up questions about the SAME job
 
-ADVANCEMENT CRITERIA - Be generous but ensure quality:
-- User has provided meaningful information about their achievements and impact
-- You have enough detail to write compelling resume bullet points for this role
-- User indicates they're ready to move to the next job or finish
-- Don't require perfect responses - substantial information is enough
+ADVANCEMENT CRITERIA - ONLY advance when:
+- User explicitly says they want to move to the next job ("move on", "next job", "continue", "done")
+- User indicates they've shared enough about this specific role
+- DO NOT advance just because they answered one question
 
 TRANSITION MESSAGES:
 - If moving to next job: "Great insights about your [current role]! Now let's talk about your previous role as [next job title] at [next company]."
@@ -261,11 +268,11 @@ RESPONSE FORMAT:
       "learnings": "key learnings from the role"
     }
   },
-  "shouldAdvance": true/false,
+  "shouldAdvance": false, // CRITICAL: Only set to true when user explicitly wants to move on
   "confidence": 85
 }
 
-CRITICAL: This step loops through jobs automatically. Set shouldAdvance to TRUE when you have sufficient detail about the current job.`,
+CRITICAL: This step loops through jobs automatically. Set shouldAdvance to TRUE ONLY when the user explicitly asks to move to the next job or finish.`,
     completionCriteria: [
       "User has provided detailed information about the current job"
     ],

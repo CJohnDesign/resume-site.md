@@ -38,6 +38,7 @@ interface JobLoopContext {
   totalJobs: number;
   hasMoreJobs: boolean;
   nextJob?: any;
+  isTransitioning?: boolean;
 }
 
 export function useOpenAI() {
@@ -58,7 +59,7 @@ export function useOpenAI() {
       hasJobContext: !!additionalContext,
       currentJobTitle: additionalContext?.currentJob?.title,
       currentJobCompany: additionalContext?.currentJob?.company,
-      userEmail: interviewState.personalInfo.email // For database context
+      userEmail: interviewState.personalInfo.email
     });
 
     const apiKey = getApiKey();
@@ -85,7 +86,7 @@ export function useOpenAI() {
             })),
             { role: 'user', content: userInput }
           ],
-          max_tokens: 2000, // Increased for comprehensive reports
+          max_tokens: 2000,
           temperature: 0.1,
           response_format: { type: "json_object" }
         };
@@ -167,8 +168,27 @@ export function useOpenAI() {
         const stateUpdate = processStructuredResponse(parsedResponse, interviewState, currentStep);
         console.log('🔄 [OpenAI] Processed state update:', !!stateUpdate);
 
-        // Enhanced advancement logic with frontend validation backup
+        // FIXED: Enhanced advancement logic for job loop
         let shouldAdvance = parsedResponse.shouldAdvance || false;
+        
+        // CRITICAL: For job experience loop, check for explicit continue signals
+        if (currentStep.name === 'job-experience-loop' && !shouldAdvance) {
+          const continueSignals = [
+            'move on', 'next job', 'continue', 'done with this', 'finished with this',
+            'move to next', 'next position', 'next role', 'that\'s enough', 'ready for next'
+          ];
+          
+          const userInputLower = userInput.toLowerCase();
+          const hasExplicitContinue = continueSignals.some(signal => userInputLower.includes(signal));
+          
+          if (hasExplicitContinue) {
+            console.log('🚀 [OpenAI] Detected explicit continue signal in job loop:', userInput);
+            shouldAdvance = true;
+          } else {
+            console.log('🔄 [OpenAI] No explicit continue signal, staying on current job');
+            shouldAdvance = false;
+          }
+        }
         
         // Frontend validation backup for text input steps
         if (!shouldAdvance && currentStep.useTextInput) {
@@ -349,18 +369,13 @@ function shouldAdvanceBasedOnStep(userInput: string, currentStep: InterviewStep)
       break;
     
     case 'job-experience-loop':
-      // For job experience loop, be generous with substantial responses
-      shouldAdvance = userInput.trim().length > 20 && (
-        input.includes('achievement') ||
-        input.includes('challenge') ||
-        input.includes('skill') ||
-        input.includes('impact') ||
-        input.includes('learning') ||
-        input.includes('next job') ||
-        input.includes('move on') ||
-        input.includes('done') ||
-        input.includes('finish')
-      );
+      // CRITICAL: For job experience loop, only advance on explicit continue signals
+      const continueSignals = [
+        'move on', 'next job', 'continue', 'done with this', 'finished with this',
+        'move to next', 'next position', 'next role', 'that\'s enough', 'ready for next'
+      ];
+      
+      shouldAdvance = continueSignals.some(signal => input.includes(signal));
       break;
     
     default:
@@ -427,12 +442,19 @@ NEXT JOB TO DISCUSS:
 - Next Duration: "${nextJob.duration || 'Not specified'}"
 ` : ''}
 
-DYNAMIC LOOP INSTRUCTIONS:
-- You are specifically discussing their role as "${currentJob?.title}" at "${currentJob?.company}"
+CRITICAL JOB LOOP BEHAVIOR:
+- You are ONLY discussing "${currentJob?.title}" at "${currentJob?.company}"
+- STAY on this job until user explicitly asks to move on
+- Ask multiple questions about THIS SPECIFIC JOB: achievements, challenges, skills, impact
+- DO NOT advance to next job automatically
+- ONLY set shouldAdvance to TRUE when user says: "move on", "next job", "continue", "done with this role"
+
+CONVERSATION FLOW:
 - Reference this job explicitly: "Tell me about your time as ${currentJob?.title} at ${currentJob?.company}"
-- Ask about specific achievements, challenges, and impact in THIS ROLE
-- Help them articulate accomplishments for THIS SPECIFIC POSITION
-- When you have sufficient detail about THIS JOB, set shouldAdvance to true
+- Ask about specific achievements in THIS ROLE
+- Explore challenges overcome in THIS POSITION
+- Discuss skills developed in THIS JOB
+- Continue asking follow-up questions about the SAME job
 
 ${additionalContext.hasMoreJobs ? `
 TRANSITION MESSAGE WHEN ADVANCING:
@@ -691,7 +713,7 @@ function getFallbackResponse(stepName: string): string {
       case 'career-objectives':
         return "That's great insight into your career goals! Is there anything else you'd like to share, or shall we continue?";
       case 'job-experience-loop':
-        return "Thank you for sharing that information about your work experience. Let's continue with more details.";
+        return "Thank you for sharing that information about your work experience. Tell me more about this role, or let me know if you'd like to move on to the next position.";
       case 'closing':
         return "Excellent! Your resume website instructions are ready for download.";
       default:
