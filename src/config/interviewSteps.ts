@@ -285,7 +285,7 @@ CRITICAL: This step loops through a maximum of 2 jobs only. Set shouldAdvance to
     name: "closing",
     active: true,
     title: "Resume Website Ready",
-    initialMessage: "Perfect! I've compiled all your information into a comprehensive design brief for your personal resume website. You can see the complete instructions below - they include everything needed to build a modern, professional resume site with dark mode, responsive design, and all your career details beautifully formatted. Simply download the instructions and paste them into any AI website builder to create your site!",
+    initialMessage: "Perfect! I've compiled all your information into a comprehensive design brief for your personal resume website. You can see the complete instructions on the right - they include everything needed to build a modern, professional resume site with dark mode, responsive design, and all your career details beautifully formatted. Simply click the 'Build with Bolt' button to start building your website!",
     systemPrompt: `You are completing the interview process. The user has provided all necessary information. Keep responses very short and direct them to review their resume website instructions.`,
     completionCriteria: [
       "Resume website instructions generated"
