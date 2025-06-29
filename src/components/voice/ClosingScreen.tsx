@@ -72,10 +72,57 @@ export function ClosingScreen({ interviewState, onRestartSession }: ClosingScree
       {/* Split Screen Layout with higher z-index */}
       <div className="fixed inset-0 flex animate-slide-in-right z-[10000]">
         
-        {/* Left Column - Main Content (pushed left) */}
-        <div className="w-1/2 bg-gradient-to-br from-gray-900 via-black to-gray-800 flex flex-col items-center justify-center p-8 transition-all duration-700 ease-out relative">
+        {/* Left Column - Main Content (centered with button at bottom) */}
+        <div className="w-1/2 bg-gradient-to-br from-gray-900 via-black to-gray-800 flex flex-col relative">
           
-          {/* Restart Session Button - Bottom Left */}
+          {/* Centered Content Area */}
+          <div className="flex-1 flex flex-col items-center justify-center p-8 transition-all duration-700 ease-out">
+            
+            {/* Success Icon and Message */}
+            <div className="text-center animate-scale-in">
+              <div className="w-32 h-32 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-green-500/25 animate-pulse">
+                <CheckCircle className="w-16 h-16 text-white" />
+              </div>
+              
+              <Typography variant="h1" color="primary" className="mb-4">
+                Website Instructions Ready!
+              </Typography>
+              
+              <Typography variant="h5" color="secondary" className="mb-8 max-w-md">
+                Your comprehensive resume website design brief has been generated and is ready for AI to build.
+              </Typography>
+              
+              {/* Summary Cards */}
+              <div className="space-y-4 max-w-md">
+                <Card variant="glass" padding="md">
+                  <div className="flex items-center justify-between">
+                    <Typography variant="body2" color="muted">Name:</Typography>
+                    <Typography variant="body2" color="primary" weight="medium">
+                      {interviewState.personalInfo.name}
+                    </Typography>
+                  </div>
+                </Card>
+                <Card variant="glass" padding="md">
+                  <div className="flex items-center justify-between">
+                    <Typography variant="body2" color="muted">Email:</Typography>
+                    <Typography variant="body2" color="primary" weight="medium" className="text-sm">
+                      {interviewState.personalInfo.email}
+                    </Typography>
+                  </div>
+                </Card>
+                <Card variant="glass" padding="md">
+                  <div className="flex items-center justify-between">
+                    <Typography variant="body2" color="muted">LinkedIn:</Typography>
+                    <Typography variant="body2" color="primary" weight="medium" className="text-sm">
+                      {interviewState.personalInfo.linkedin}
+                    </Typography>
+                  </div>
+                </Card>
+              </div>
+            </div>
+          </div>
+          
+          {/* Restart Session Button - Fixed at Bottom Left */}
           <div className="absolute bottom-8 left-8">
             <Button
               variant="ghost"
@@ -86,49 +133,6 @@ export function ClosingScreen({ interviewState, onRestartSession }: ClosingScree
             >
               Start New Session
             </Button>
-          </div>
-          
-          {/* Success Icon and Message */}
-          <div className="text-center animate-scale-in">
-            <div className="w-32 h-32 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-green-500/25 animate-pulse">
-              <CheckCircle className="w-16 h-16 text-white" />
-            </div>
-            
-            <Typography variant="h1" color="primary" className="mb-4">
-              Website Instructions Ready!
-            </Typography>
-            
-            <Typography variant="h5" color="secondary" className="mb-8 max-w-md">
-              Your comprehensive resume website design brief has been generated and is ready for AI to build.
-            </Typography>
-            
-            {/* Summary Cards */}
-            <div className="space-y-4 max-w-md">
-              <Card variant="glass" padding="md">
-                <div className="flex items-center justify-between">
-                  <Typography variant="body2" color="muted">Name:</Typography>
-                  <Typography variant="body2" color="primary" weight="medium">
-                    {interviewState.personalInfo.name}
-                  </Typography>
-                </div>
-              </Card>
-              <Card variant="glass" padding="md">
-                <div className="flex items-center justify-between">
-                  <Typography variant="body2" color="muted">Email:</Typography>
-                  <Typography variant="body2" color="primary" weight="medium" className="text-sm">
-                    {interviewState.personalInfo.email}
-                  </Typography>
-                </div>
-              </Card>
-              <Card variant="glass" padding="md">
-                <div className="flex items-center justify-between">
-                  <Typography variant="body2" color="muted">LinkedIn:</Typography>
-                  <Typography variant="body2" color="primary" weight="medium" className="text-sm">
-                    {interviewState.personalInfo.linkedin}
-                  </Typography>
-                </div>
-              </Card>
-            </div>
           </div>
         </div>
 
