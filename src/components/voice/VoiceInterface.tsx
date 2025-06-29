@@ -219,17 +219,22 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
       const closingMessage = currentStep.initialMessage || "Perfect! I've compiled all your information into a comprehensive design brief for your personal resume website. You can see the complete instructions below - they include everything needed to build a modern, professional resume site with responsive design and all your career details beautifully formatted. Simply download the instructions and paste them into any AI website builder to create your site!";
       
       console.log('🗣️ [VoiceInterface] Speaking closing monologue:', closingMessage);
-      speak(closingMessage);
-      setConversationLog(prev => [...prev, { type: 'assistant', content: closingMessage }]);
       
-      const timer = setTimeout(() => {
-        console.log('🎉 [VoiceInterface] Actually showing closing screen now');
+      // FIXED: Await the speak promise to ensure proper timing
+      speak(closingMessage).then(() => {
+        console.log('🎉 [VoiceInterface] Closing monologue finished, showing closing screen');
         setShowClosingScreen(true);
         setIsTransitioning(false);
         setIsActive(false);
-      }, 2000); // Give time for the speech to start
+      }).catch((error) => {
+        console.error('💥 [VoiceInterface] Error speaking closing monologue:', error);
+        // Still show closing screen even if speech fails
+        setShowClosingScreen(true);
+        setIsTransitioning(false);
+        setIsActive(false);
+      });
       
-      return () => clearTimeout(timer);
+      setConversationLog(prev => [...prev, { type: 'assistant', content: closingMessage }]);
     }
   }, [currentStep?.name, showClosingScreen]);
 
@@ -335,7 +340,7 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
   };
 
   // FIXED: Extract interview start logic to reuse for subtitle click
-  const startInterview = () => {
+  const startInterview = async () => {
     console.log('🚀 [VoiceInterface] Starting interview');
     setHasStarted(true);
     setIsActive(true);
@@ -346,13 +351,23 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
     if (currentStep?.name === 'welcome' && currentStep.initialMessage) {
       const welcomeMessage = currentStep.initialMessage;
       console.log('🗣️ [VoiceInterface] Speaking WELCOME initial message:', welcomeMessage);
-      speak(welcomeMessage);
+      try {
+        await speak(welcomeMessage);
+        console.log('🗣️ [VoiceInterface] Welcome message finished speaking');
+      } catch (error) {
+        console.error('💥 [VoiceInterface] Error speaking welcome message:', error);
+      }
       setConversationLog([{ type: 'assistant', content: welcomeMessage }]);
     } else {
       // Fallback message if no initial message
       const fallbackMessage = "Hi! Let's create your resume together. What's your full name?";
       console.log('🗣️ [VoiceInterface] Speaking fallback welcome message:', fallbackMessage);
-      speak(fallbackMessage);
+      try {
+        await speak(fallbackMessage);
+        console.log('🗣️ [VoiceInterface] Fallback message finished speaking');
+      } catch (error) {
+        console.error('💥 [VoiceInterface] Error speaking fallback message:', error);
+      }
       setConversationLog([{ type: 'assistant', content: fallbackMessage }]);
     }
     
@@ -487,7 +502,12 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
       
       // CRITICAL: Always speak the AI response - this IS the transition message
       console.log('🗣️ [VoiceInterface] Speaking AI response (this is the transition):', response.message);
-      speak(response.message);
+      try {
+        await speak(response.message);
+        console.log('🗣️ [VoiceInterface] AI response finished speaking');
+      } catch (error) {
+        console.error('💥 [VoiceInterface] Error speaking AI response:', error);
+      }
       
       if (response.stateUpdate) {
         console.log('🔄 [VoiceInterface] Updating interview state:', response.stateUpdate);
@@ -532,61 +552,57 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
           console.log('🔄 [VoiceInterface] Job loop complete, generating resume and advancing to closing');
           
           // Generate resume website prompt behind the scenes with updated state
-          setTimeout(() => {
-            try {
-              // Create updated state with all job data for resume generation
-              const updatedState = {
-                ...interviewState,
-                jobExperiences: {
-                  ...interviewState.jobExperiences,
-                  [actualJobIndex]: response.data?.jobExperience
-                },
-                jobExperienceReports: {
-                  ...interviewState.jobExperienceReports,
-                  [actualJobIndex]: response.data?.jobExperienceReport
-                }
-              };
-              
-              console.log('🏗️ [VoiceInterface] Generating resume with complete job data:', {
-                jobExperiences: Object.keys(updatedState.jobExperiences || {}),
-                jobExperienceReports: Object.keys(updatedState.jobExperienceReports || {})
-              });
-              
-              const websitePrompt = generateResumeWebsitePrompt(updatedState);
-              onUpdateState({ resumeWebsitePrompt: websitePrompt });
-              console.log('🏗️ [VoiceInterface] Generated resume website prompt behind the scenes');
-            } catch (error) {
-              console.error('💥 [VoiceInterface] Error generating resume prompt:', error);
-            }
+          try {
+            // Create updated state with all job data for resume generation
+            const updatedState = {
+              ...interviewState,
+              jobExperiences: {
+                ...interviewState.jobExperiences,
+                [actualJobIndex]: response.data?.jobExperience
+              },
+              jobExperienceReports: {
+                ...interviewState.jobExperienceReports,
+                [actualJobIndex]: response.data?.jobExperienceReport
+              }
+            };
             
-            markStepComplete();
-            const nextStep = moveToNextStep();
-            if (nextStep) {
-              console.log('✅ [VoiceInterface] Moved to closing step:', nextStep.name, 'ID:', nextStep.id);
-              onUpdateState({ currentStep: nextStep.id });
-              
-              // The closing screen effect will handle the monologue
-            } else {
-              console.log('🏁 [VoiceInterface] No next step - interview complete');
-            }
-          }, 1000);
+            console.log('🏗️ [VoiceInterface] Generating resume with complete job data:', {
+              jobExperiences: Object.keys(updatedState.jobExperiences || {}),
+              jobExperienceReports: Object.keys(updatedState.jobExperienceReports || {})
+            });
+            
+            const websitePrompt = generateResumeWebsitePrompt(updatedState);
+            onUpdateState({ resumeWebsitePrompt: websitePrompt });
+            console.log('🏗️ [VoiceInterface] Generated resume website prompt behind the scenes');
+          } catch (error) {
+            console.error('💥 [VoiceInterface] Error generating resume prompt:', error);
+          }
+          
+          markStepComplete();
+          const nextStep = moveToNextStep();
+          if (nextStep) {
+            console.log('✅ [VoiceInterface] Moved to closing step:', nextStep.name, 'ID:', nextStep.id);
+            onUpdateState({ currentStep: nextStep.id });
+            
+            // The closing screen effect will handle the monologue
+          } else {
+            console.log('🏁 [VoiceInterface] No next step - interview complete');
+          }
         }
       } else if (response.shouldAdvance && !currentStep.isDynamicLoop) {
         console.log('➡️ [VoiceInterface] Advancing to next step (non-loop)...');
         
-        setTimeout(() => {
-          markStepComplete();
-          const nextStep = moveToNextStep();
-          if (nextStep) {
-            console.log('✅ [VoiceInterface] Moved to next step:', nextStep.name, 'ID:', nextStep.id);
-            onUpdateState({ currentStep: nextStep.id });
-            
-            // The closing screen effect will handle the monologue if it's the closing step
-          } else {
-            console.log('🏁 [VoiceInterface] No next step - interview complete');
-          }
-          setIsTransitioning(false);
-        }, 2000);
+        markStepComplete();
+        const nextStep = moveToNextStep();
+        if (nextStep) {
+          console.log('✅ [VoiceInterface] Moved to next step:', nextStep.name, 'ID:', nextStep.id);
+          onUpdateState({ currentStep: nextStep.id });
+          
+          // The closing screen effect will handle the monologue if it's the closing step
+        } else {
+          console.log('🏁 [VoiceInterface] No next step - interview complete');
+        }
+        setIsTransitioning(false);
       } else {
         // FIXED: No advancement, allow new input
         console.log('🔄 [VoiceInterface] No advancement, allowing new input');
@@ -606,7 +622,11 @@ export function VoiceInterface({ interviewState, onUpdateState }: VoiceInterface
       
       setConversationLog(prev => [...prev, { type: 'assistant', content: contextualErrorMessage }]);
       console.log('🗣️ [VoiceInterface] Speaking error message:', contextualErrorMessage);
-      speak(contextualErrorMessage);
+      try {
+        await speak(contextualErrorMessage);
+      } catch (speakError) {
+        console.error('💥 [VoiceInterface] Error speaking error message:', speakError);
+      }
     } finally {
       console.log('🏁 [VoiceInterface] Processing complete, setting isProcessing to false');
       setIsProcessing(false);

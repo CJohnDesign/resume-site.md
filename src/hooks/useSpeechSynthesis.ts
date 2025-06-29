@@ -40,44 +40,55 @@ export function useSpeechSynthesis() {
     }
   }, []);
 
-  const speak = (text: string) => {
-    if (!isSupported || !text) {
-      console.log('⚠️ [SpeechSynthesis] Cannot speak - not supported or no text');
-      return;
-    }
+  const speak = (text: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if (!isSupported || !text) {
+        console.log('⚠️ [SpeechSynthesis] Cannot speak - not supported or no text');
+        resolve();
+        return;
+      }
 
-    console.log('🗣️ [SpeechSynthesis] Starting to speak:', text.substring(0, 50) + '...');
+      console.log('🗣️ [SpeechSynthesis] Starting to speak:', text.substring(0, 50) + '...');
 
-    // Stop any current speech
-    speechSynthesis.cancel();
+      // Stop any current speech
+      speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    
-    if (selectedVoice) {
-      utterance.voice = selectedVoice;
-      console.log('🗣️ [SpeechSynthesis] Using voice:', selectedVoice.name);
-    }
-    
-    utterance.rate = rate;
-    utterance.volume = volume;
-    utterance.pitch = 1.0;
+      const utterance = new SpeechSynthesisUtterance(text);
+      
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+        console.log('🗣️ [SpeechSynthesis] Using voice:', selectedVoice.name);
+      }
+      
+      utterance.rate = rate;
+      utterance.volume = volume;
+      utterance.pitch = 1.0;
 
-    utterance.onstart = () => {
-      console.log('🗣️ [SpeechSynthesis] Speech started');
-      setIsSpeaking(true);
-    };
-    
-    utterance.onend = () => {
-      console.log('🗣️ [SpeechSynthesis] Speech ended');
-      setIsSpeaking(false);
-    };
-    
-    utterance.onerror = (event) => {
-      console.error('💥 [SpeechSynthesis] Speech error:', event.error);
-      setIsSpeaking(false);
-    };
+      utterance.onstart = () => {
+        console.log('🗣️ [SpeechSynthesis] Speech started');
+        setIsSpeaking(true);
+      };
+      
+      utterance.onend = () => {
+        console.log('🗣️ [SpeechSynthesis] Speech ended');
+        setIsSpeaking(false);
+        resolve();
+      };
+      
+      utterance.onerror = (event) => {
+        console.error('💥 [SpeechSynthesis] Speech error:', event.error);
+        setIsSpeaking(false);
+        // Only reject if it's not an interruption error
+        if (event.error !== 'interrupted') {
+          reject(new Error(`Speech synthesis error: ${event.error}`));
+        } else {
+          console.log('🗣️ [SpeechSynthesis] Speech was interrupted (expected behavior)');
+          resolve();
+        }
+      };
 
-    speechSynthesis.speak(utterance);
+      speechSynthesis.speak(utterance);
+    });
   };
 
   const stop = () => {
