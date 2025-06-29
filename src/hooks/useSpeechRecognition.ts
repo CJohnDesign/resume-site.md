@@ -97,11 +97,15 @@ export function useSpeechRecognition() {
   const startListening = () => {
     if (recognitionRef.current && !isListeningRef.current) {
       console.log('🎤 [SpeechRecognition] Starting listening...');
-      // FIXED: Don't reset transcript when starting - preserve accumulated content
+      // FIXED: Set state immediately before starting to prevent race condition
+      isListeningRef.current = true;
+      setIsListening(true);
+      
       try {
         recognitionRef.current.start();
       } catch (error) {
         console.error('💥 [SpeechRecognition] Error starting recognition:', error);
+        // FIXED: Reset state if start fails
         isListeningRef.current = false;
         setIsListening(false);
       }
