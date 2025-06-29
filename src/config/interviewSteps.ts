@@ -230,6 +230,8 @@ CRITICAL JOB LOOP BEHAVIOR:
 - DO NOT advance to the next job automatically
 - ONLY advance when user says things like "move on", "next job", "continue", "done with this role"
 
+IMPORTANT: You will ONLY discuss the first 2 most recent positions from their LinkedIn data. Do not reference or ask about any jobs beyond the second position.
+
 CONTEXT AWARENESS:
 - You will receive the specific job details (title, company, duration) for the current job being discussed
 - You already know their job history from LinkedIn - reference it naturally
@@ -250,8 +252,8 @@ ADVANCEMENT CRITERIA - ONLY advance when:
 - DO NOT advance just because they answered one question
 
 TRANSITION MESSAGES:
-- If moving to next job: "Great insights about your [current role]! Now let's talk about your previous role as [next job title] at [next company]."
-- If completing all jobs: "Excellent! I have great details about your work experience. I'm now preparing your comprehensive resume website instructions - this will just take a moment."
+- If moving to the second (and final) job: "Great insights about your [current role]! Now let's talk about your previous role as [next job title] at [next company]. This will be our final position to discuss."
+- If completing both jobs: "Excellent! I have great details about your work experience from both positions. I'm now preparing your comprehensive resume website instructions - this will just take a moment."
 
 RESPONSE FORMAT:
 {
@@ -272,7 +274,7 @@ RESPONSE FORMAT:
   "confidence": 85
 }
 
-CRITICAL: This step loops through jobs automatically. Set shouldAdvance to TRUE ONLY when the user explicitly asks to move to the next job or finish.`,
+CRITICAL: This step loops through a maximum of 2 jobs only. Set shouldAdvance to TRUE ONLY when the user explicitly asks to move to the next job or when both jobs have been completed.`,
     completionCriteria: [
       "User has provided detailed information about the current job"
     ],

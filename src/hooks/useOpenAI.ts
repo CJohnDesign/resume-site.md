@@ -168,7 +168,7 @@ export function useOpenAI() {
         const stateUpdate = processStructuredResponse(parsedResponse, interviewState, currentStep);
         console.log('🔄 [OpenAI] Processed state update:', !!stateUpdate);
 
-        // FIXED: Enhanced advancement logic for job loop
+        // FIXED: Enhanced advancement logic for job loop with 2-job limit
         let shouldAdvance = parsedResponse.shouldAdvance || false;
         
         // CRITICAL: For job experience loop, check for explicit continue signals
@@ -432,11 +432,11 @@ CURRENT JOB YOU ARE DISCUSSING:
 - Job Description: "${currentJob?.description || 'Not provided'}"
 
 POSITION IN SEQUENCE:
-- This is job ${additionalContext.jobIndex + 1} of ${additionalContext.totalJobs} total jobs
-- This is their ${additionalContext.jobIndex === 0 ? 'MOST RECENT' : additionalContext.jobIndex === additionalContext.totalJobs - 1 ? 'OLDEST' : 'PREVIOUS'} position
+- This is job ${additionalContext.jobIndex + 1} of ${additionalContext.totalJobs} total jobs (MAX 2 JOBS ONLY)
+- This is their ${additionalContext.jobIndex === 0 ? 'MOST RECENT' : 'PREVIOUS'} position
 
 ${additionalContext.hasMoreJobs && nextJob ? `
-NEXT JOB TO DISCUSS:
+NEXT JOB TO DISCUSS (FINAL JOB):
 - Next Job Title: "${nextJob.title}"
 - Next Company: "${nextJob.company}"
 - Next Duration: "${nextJob.duration || 'Not specified'}"
@@ -448,6 +448,7 @@ CRITICAL JOB LOOP BEHAVIOR:
 - Ask multiple questions about THIS SPECIFIC JOB: achievements, challenges, skills, impact
 - DO NOT advance to next job automatically
 - ONLY set shouldAdvance to TRUE when user says: "move on", "next job", "continue", "done with this role"
+- REMEMBER: You will only discuss 2 jobs maximum, then complete the interview
 
 CONVERSATION FLOW:
 - Reference this job explicitly: "Tell me about your time as ${currentJob?.title} at ${currentJob?.company}"
@@ -457,11 +458,11 @@ CONVERSATION FLOW:
 - Continue asking follow-up questions about the SAME job
 
 ${additionalContext.hasMoreJobs ? `
-TRANSITION MESSAGE WHEN ADVANCING:
-"Great insights about your role as ${currentJob?.title} at ${currentJob?.company}! Now let's talk about your previous position as ${nextJob?.title} at ${nextJob?.company}."
+TRANSITION MESSAGE WHEN ADVANCING TO SECOND JOB:
+"Great insights about your role as ${currentJob?.title} at ${currentJob?.company}! Now let's talk about your previous position as ${nextJob?.title} at ${nextJob?.company}. This will be our final position to discuss."
 ` : `
-COMPLETION MESSAGE WHEN ADVANCING:
-"Excellent! I have great details about your work experience. I'm now preparing your comprehensive resume website instructions - this will just take a moment."
+COMPLETION MESSAGE WHEN ADVANCING (AFTER 2 JOBS):
+"Excellent! I have great details about your work experience from both positions. I'm now preparing your comprehensive resume website instructions - this will just take a moment."
 `}
 
 COMPREHENSIVE REPORTING REQUIREMENT:

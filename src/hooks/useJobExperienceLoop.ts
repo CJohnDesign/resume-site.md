@@ -9,8 +9,8 @@ export interface JobExperienceLoopState {
   currentJob: LinkedInExperience | null;
   jobsToDiscuss: LinkedInExperience[];
   actualJobIndex: number;
-  isTransitioning: boolean; // NEW: Track internal transitions
-  lastUpdateTimestamp: number; // NEW: Track when state was last updated
+  isTransitioning: boolean;
+  lastUpdateTimestamp: number;
 }
 
 export function useJobExperienceLoop(interviewState: InterviewState) {
@@ -26,7 +26,6 @@ export function useJobExperienceLoop(interviewState: InterviewState) {
     lastUpdateTimestamp: Date.now()
   });
 
-  // FIXED: Memoized state update function to prevent unnecessary re-renders
   const updateLoopState = useCallback((updates: Partial<JobExperienceLoopState>) => {
     setLoopState(prev => {
       const newState = {
@@ -40,6 +39,7 @@ export function useJobExperienceLoop(interviewState: InterviewState) {
         totalJobs: newState.totalJobsToDiscuss,
         currentJobTitle: newState.currentJob?.title,
         isTransitioning: newState.isTransitioning,
+        isComplete: newState.isLoopComplete,
         timestamp: newState.lastUpdateTimestamp
       });
       
@@ -47,7 +47,7 @@ export function useJobExperienceLoop(interviewState: InterviewState) {
     });
   }, []);
 
-  // FIXED: Initialize the loop with proper synchronization
+  // Initialize the loop with exactly 2 jobs
   useEffect(() => {
     const shouldInitialize = interviewState.linkedinParsedData?.experience && 
                             interviewState.linkedinParsedData.experience.length > 0 && 
@@ -55,16 +55,16 @@ export function useJobExperienceLoop(interviewState: InterviewState) {
                             interviewState.currentStep === 5;
 
     if (shouldInitialize) {
-      console.log('🔄 [JobExperienceLoop] Initializing job experience loop with synchronization');
+      console.log('🔄 [JobExperienceLoop] Initializing job experience loop');
       
       const allJobs = interviewState.linkedinParsedData.experience;
-      const jobsToDiscuss = allJobs.slice(0, Math.min(2, allJobs.length));
+      // FIXED: Always limit to exactly 2 jobs maximum
+      const jobsToDiscuss = allJobs.slice(0, 2);
       const firstJob = jobsToDiscuss[0] || null;
       
-      console.log('🔄 [JobExperienceLoop] Jobs selected for discussion:', 
+      console.log('🔄 [JobExperienceLoop] Jobs selected for discussion (max 2):', 
         jobsToDiscuss.map((job, index) => `${index}. ${job.title} at ${job.company}`));
       
-      // FIXED: Atomic state update to prevent race conditions
       updateLoopState({
         currentJobIndex: 0,
         totalJobsToDiscuss: jobsToDiscuss.length,
@@ -78,33 +78,36 @@ export function useJobExperienceLoop(interviewState: InterviewState) {
     }
   }, [interviewState.linkedinParsedData?.experience, interviewState.currentStep, loopState.isLoopActive, updateLoopState]);
 
-  // FIXED: Synchronized job advancement with proper state management
+  // FIXED: Enhanced job advancement with proper bounds checking
   const moveToNextJob = useCallback((): boolean => {
     console.log('🔄 [JobExperienceLoop] moveToNextJob called with state:', {
       currentJobIndex: loopState.currentJobIndex,
       totalJobsToDiscuss: loopState.totalJobsToDiscuss,
-      isTransitioning: loopState.isTransitioning
+      isTransitioning: loopState.isTransitioning,
+      isComplete: loopState.isLoopComplete
     });
     
-    // FIXED: Prevent multiple simultaneous transitions
-    if (loopState.isTransitioning) {
-      console.log('⚠️ [JobExperienceLoop] Already transitioning, ignoring moveToNextJob');
-      return loopState.currentJobIndex < loopState.totalJobsToDiscuss - 1;
+    // Prevent multiple simultaneous transitions
+    if (loopState.isTransitioning || loopState.isLoopComplete) {
+      console.log('⚠️ [JobExperienceLoop] Already transitioning or complete, ignoring moveToNextJob');
+      return false;
     }
     
-    if (loopState.currentJobIndex < loopState.totalJobsToDiscuss - 1) {
-      const nextIndex = loopState.currentJobIndex + 1;
+    const nextIndex = loopState.currentJobIndex + 1;
+    
+    // FIXED: Strict bounds checking - only advance if within our selected jobs
+    if (nextIndex < loopState.totalJobsToDiscuss && nextIndex < loopState.jobsToDiscuss.length) {
       const nextJob = loopState.jobsToDiscuss[nextIndex];
       
       console.log('🔄 [JobExperienceLoop] Moving to job index:', nextIndex, '-', 
         `${nextJob?.title} at ${nextJob?.company}`);
       
-      // FIXED: Set transitioning state first, then update job
+      // Set transitioning state first
       updateLoopState({
         isTransitioning: true
       });
       
-      // FIXED: Use setTimeout to ensure UI has time to update
+      // Update job after small delay for UI synchronization
       setTimeout(() => {
         updateLoopState({
           currentJobIndex: nextIndex,
@@ -112,11 +115,16 @@ export function useJobExperienceLoop(interviewState: InterviewState) {
           currentJob: nextJob,
           isTransitioning: false
         });
-      }, 100); // Small delay to ensure state synchronization
+      }, 100);
       
       return true;
     } else {
-      console.log('🔄 [JobExperienceLoop] All jobs discussed, completing loop');
+      console.log('🔄 [JobExperienceLoop] All selected jobs discussed, completing loop');
+      console.log('🔄 [JobExperienceLoop] Final state:', {
+        discussedJobs: loopState.currentJobIndex + 1,
+        totalSelected: loopState.totalJobsToDiscuss,
+        jobTitles: loopState.jobsToDiscuss.map(job => job.title)
+      });
       
       updateLoopState({
         isLoopComplete: true,
@@ -126,7 +134,7 @@ export function useJobExperienceLoop(interviewState: InterviewState) {
       
       return false;
     }
-  }, [loopState.currentJobIndex, loopState.totalJobsToDiscuss, loopState.jobsToDiscuss, loopState.isTransitioning, updateLoopState]);
+  }, [loopState.currentJobIndex, loopState.totalJobsToDiscuss, loopState.jobsToDiscuss, loopState.isTransitioning, loopState.isLoopComplete, updateLoopState]);
 
   const saveJobExperience = useCallback((jobExperience: JobExperienceDetail): void => {
     console.log('🔄 [JobExperienceLoop] Saving job experience for index:', loopState.actualJobIndex);
@@ -137,9 +145,9 @@ export function useJobExperienceLoop(interviewState: InterviewState) {
     });
   }, [loopState.actualJobIndex]);
 
-  // FIXED: Memoized context message generation with current state
+  // FIXED: Enhanced context message with proper job bounds checking
   const getJobContextMessage = useCallback((): string => {
-    if (!loopState.currentJob) {
+    if (!loopState.currentJob || loopState.currentJobIndex >= loopState.jobsToDiscuss.length) {
       return "Let's start with your most recent position.";
     }
 
@@ -154,11 +162,10 @@ export function useJobExperienceLoop(interviewState: InterviewState) {
     } else {
       return `Great! Now let's talk about your role as ${job.title} at ${job.company}. What were your main accomplishments there?`;
     }
-  }, [loopState.currentJob, loopState.currentJobIndex, loopState.totalJobsToDiscuss]);
+  }, [loopState.currentJob, loopState.currentJobIndex, loopState.totalJobsToDiscuss, loopState.jobsToDiscuss]);
 
-  // FIXED: Synchronized progress message with proper state tracking
+  // FIXED: Progress message with accurate job counting
   const getProgressMessage = useCallback((): string => {
-    // FIXED: Ensure we use the most current state
     const current = loopState.currentJobIndex + 1;
     const total = loopState.totalJobsToDiscuss;
     const currentJobTitle = loopState.currentJob?.title || 'Current Position';
@@ -168,11 +175,12 @@ export function useJobExperienceLoop(interviewState: InterviewState) {
     console.log('📊 [JobExperienceLoop] Generated progress message:', message, {
       currentIndex: loopState.currentJobIndex,
       total: loopState.totalJobsToDiscuss,
+      withinBounds: loopState.currentJobIndex < loopState.jobsToDiscuss.length,
       timestamp: loopState.lastUpdateTimestamp
     });
     
     return message;
-  }, [loopState.currentJobIndex, loopState.totalJobsToDiscuss, loopState.currentJob?.title, loopState.lastUpdateTimestamp]);
+  }, [loopState.currentJobIndex, loopState.totalJobsToDiscuss, loopState.currentJob?.title, loopState.jobsToDiscuss.length, loopState.lastUpdateTimestamp]);
 
   const shouldAdvanceToNextStep = useCallback((): boolean => {
     return loopState.isLoopComplete;
@@ -192,15 +200,15 @@ export function useJobExperienceLoop(interviewState: InterviewState) {
     });
   }, [updateLoopState]);
 
-  // FIXED: Enhanced context with better synchronization
+  // FIXED: Enhanced context with strict bounds checking
   const getJobLoopContext = useCallback(() => {
-    if (!loopState.isLoopActive || !loopState.currentJob) {
-      console.log('🔄 [JobExperienceLoop] No job context - loop not active or no current job');
+    if (!loopState.isLoopActive || !loopState.currentJob || loopState.currentJobIndex >= loopState.jobsToDiscuss.length) {
+      console.log('🔄 [JobExperienceLoop] No job context - loop not active, no current job, or index out of bounds');
       return null;
     }
 
     const nextJobIndex = loopState.currentJobIndex + 1;
-    const nextJob = nextJobIndex < loopState.totalJobsToDiscuss ? 
+    const nextJob = nextJobIndex < loopState.totalJobsToDiscuss && nextJobIndex < loopState.jobsToDiscuss.length ? 
       loopState.jobsToDiscuss[nextJobIndex] : null;
 
     const context = {
@@ -208,9 +216,9 @@ export function useJobExperienceLoop(interviewState: InterviewState) {
       currentJob: loopState.currentJob,
       jobIndex: loopState.actualJobIndex,
       totalJobs: loopState.totalJobsToDiscuss,
-      hasMoreJobs: loopState.currentJobIndex < loopState.totalJobsToDiscuss - 1,
+      hasMoreJobs: nextJobIndex < loopState.totalJobsToDiscuss && nextJobIndex < loopState.jobsToDiscuss.length,
       nextJob,
-      isTransitioning: loopState.isTransitioning // NEW: Include transition state
+      isTransitioning: loopState.isTransitioning
     };
 
     console.log('🔄 [JobExperienceLoop] Generated job context:', {
@@ -218,12 +226,14 @@ export function useJobExperienceLoop(interviewState: InterviewState) {
       jobIndex: context.jobIndex,
       totalJobs: context.totalJobs,
       hasMoreJobs: context.hasMoreJobs,
+      nextJobTitle: context.nextJob?.title || 'None',
       isTransitioning: context.isTransitioning,
+      withinBounds: loopState.currentJobIndex < loopState.jobsToDiscuss.length,
       timestamp: loopState.lastUpdateTimestamp
     });
 
     return context;
-  }, [loopState, getJobContextMessage]);
+  }, [loopState, getJobContextMessage, loopState.jobsToDiscuss.length]);
 
   return {
     loopState,
@@ -234,14 +244,14 @@ export function useJobExperienceLoop(interviewState: InterviewState) {
     shouldAdvanceToNextStep,
     resetLoop,
     getJobLoopContext,
-    // Helper getters with proper memoization
+    // Helper getters with proper bounds checking
     isLoopActive: loopState.isLoopActive,
     isLoopComplete: loopState.isLoopComplete,
     currentJob: loopState.currentJob,
     currentJobIndex: loopState.currentJobIndex,
     totalJobsToDiscuss: loopState.totalJobsToDiscuss,
-    hasMoreJobs: loopState.currentJobIndex < loopState.totalJobsToDiscuss - 1,
+    hasMoreJobs: loopState.currentJobIndex + 1 < loopState.totalJobsToDiscuss && loopState.currentJobIndex + 1 < loopState.jobsToDiscuss.length,
     actualJobIndex: loopState.actualJobIndex,
-    isTransitioning: loopState.isTransitioning // NEW: Expose transition state
+    isTransitioning: loopState.isTransitioning
   };
 }
