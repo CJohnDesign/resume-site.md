@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Key, Lock, ArrowRight, AlertCircle, FileText, ExternalLink, Sparkles, Eye, EyeOff, Shield, Heart, Zap } from 'lucide-react';
+import { Key, Lock, ArrowRight, AlertCircle, FileText, ExternalLink, Sparkles, Eye, EyeOff, Shield, Heart, Zap, Cpu } from 'lucide-react';
 import { useApiKey } from '../hooks/useApiKey';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 import { Typography } from './ui/Typography';
+import { GameOfLife } from './GameOfLife';
 
 export function ApiKeyEntry() {
   const [apiKey, setApiKey] = useState('');
@@ -14,6 +15,7 @@ export function ApiKeyEntry() {
   const [trustSequence, setTrustSequence] = useState(0);
   const [showTrustAnimation, setShowTrustAnimation] = useState(false);
   const [sacredKeyRevealed, setSacredKeyRevealed] = useState(false);
+  const [gameOfLifeActive, setGameOfLifeActive] = useState(false);
   const { hasValidKey, storeApiKey } = useApiKey();
 
   // Animation states
@@ -191,6 +193,7 @@ export function ApiKeyEntry() {
     // Sacred sequence: 7 clicks within 3 seconds
     if (clickCount >= 6) {
       setShowTrustAnimation(true);
+      setGameOfLifeActive(true); // Activate Game of Life
       setTimeout(() => {
         setShowSacredModal(true);
         setShowTrustAnimation(false);
@@ -229,6 +232,11 @@ export function ApiKeyEntry() {
 
   const handleRevealSacredKey = () => {
     setSacredKeyRevealed(!sacredKeyRevealed);
+  };
+
+  const handleModalClose = () => {
+    setShowSacredModal(false);
+    setGameOfLifeActive(false); // Deactivate Game of Life when modal closes
   };
 
   return (
@@ -409,101 +417,124 @@ export function ApiKeyEntry() {
         </div>
       </div>
 
-      {/* Sacred Bond Modal */}
+      {/* Sacred Bond Modal with Game of Life Background */}
       <Modal
         isOpen={showSacredModal}
-        onClose={() => setShowSacredModal(false)}
+        onClose={handleModalClose}
         size="md"
         title=""
-        className="border-orange-500/30"
+        className="border-orange-500/30 relative overflow-hidden"
       >
-        <div className="text-center mb-6">
-          <div className="relative mb-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-orange-500/25 animate-pulse">
-              <Shield className="w-10 h-10 text-white" />
-            </div>
-            <div className="absolute -top-2 -right-2">
-              <Heart className="w-6 h-6 text-red-400 animate-bounce" />
-            </div>
-          </div>
-          
-          <Typography variant="h3" color="accent" className="mb-2 font-bold">
-            Sacred Bond of Trust
-          </Typography>
-          
-          <Typography variant="body1" color="secondary" className="mb-6 italic">
-            "We believe it's possible to share this without someone ruining it for everyone."
-          </Typography>
-        </div>
-
-        <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 border border-orange-500/20 rounded-xl p-6 mb-6">
-          <div className="flex items-start space-x-3 mb-4">
-            <Zap className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <Typography variant="body2" color="primary" className="mb-2 font-semibold">
-                The Sacred Covenant:
-              </Typography>
-              <ul className="text-sm text-gray-300 space-y-2">
-                <li>• You found this through curiosity and persistence</li>
-                <li>• You understand this is a gift of trust</li>
-                <li>• You won't abuse or share this sacred key</li>
-                <li>• You'll use it responsibly and with gratitude</li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="border-t border-orange-500/20 pt-4">
-            <div className="flex items-center justify-between">
-              <Typography variant="body2" color="muted">
-                Sacred Key:
-              </Typography>
-              <button
-                onClick={handleRevealSacredKey}
-                className="flex items-center space-x-2 text-orange-400 hover:text-orange-300 transition-colors"
-              >
-                {sacredKeyRevealed ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                <span className="text-sm">{sacredKeyRevealed ? 'Hide' : 'Reveal'}</span>
-              </button>
+        {/* Game of Life Background */}
+        <GameOfLife 
+          isActive={gameOfLifeActive}
+          className="rounded-xl"
+          cellSize={6}
+          speed={200}
+          opacity={0.15}
+          glowColor="#f97316"
+        />
+        
+        <div className="relative z-10">
+          <div className="text-center mb-6">
+            <div className="relative mb-6">
+              <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-orange-500/25 animate-pulse">
+                <Shield className="w-10 h-10 text-white" />
+              </div>
+              <div className="absolute -top-2 -right-2">
+                <Heart className="w-6 h-6 text-red-400 animate-bounce" />
+              </div>
+              <div className="absolute -bottom-2 -left-2">
+                <Cpu className="w-5 h-5 text-orange-400 animate-pulse" />
+              </div>
             </div>
             
-            {sacredKeyRevealed && (
-              <div className="mt-2 p-3 bg-black/30 rounded-lg border border-orange-500/30">
-                <code className="text-xs text-orange-300 font-mono break-all">
-                  sk-sacred-bond-of-trust-demo-key-2024
-                </code>
-              </div>
-            )}
+            <Typography variant="h3" color="accent" className="mb-2 font-bold">
+              Sacred Bond of Trust
+            </Typography>
+            
+            <Typography variant="body1" color="secondary" className="mb-6 italic">
+              "We believe it's possible to share this without someone ruining it for everyone."
+            </Typography>
           </div>
-        </div>
 
-        <div className="space-y-4">
-          <Button
-            onClick={handleUseSacredKey}
-            variant="primary"
-            size="lg"
-            fullWidth
-            isLoading={isValidating}
-            loadingText="Establishing sacred bond..."
-            leftIcon={<Heart className="w-5 h-5" />}
-            className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-          >
-            Accept Sacred Bond
-          </Button>
-          
-          <Button
-            onClick={() => setShowSacredModal(false)}
-            variant="ghost"
-            size="md"
-            fullWidth
-          >
-            I'm not ready for this responsibility
-          </Button>
-        </div>
+          <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 border border-orange-500/20 rounded-xl p-6 mb-6 backdrop-blur-sm">
+            <div className="flex items-start space-x-3 mb-4">
+              <Zap className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <Typography variant="body2" color="primary" className="mb-2 font-semibold">
+                  The Sacred Covenant:
+                </Typography>
+                <ul className="text-sm text-gray-300 space-y-2">
+                  <li>• You found this through curiosity and persistence</li>
+                  <li>• You understand this is a gift of trust</li>
+                  <li>• You won't abuse or share this sacred key</li>
+                  <li>• You'll use it responsibly and with gratitude</li>
+                  <li>• The cellular automaton witnesses your oath</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="border-t border-orange-500/20 pt-4">
+              <div className="flex items-center justify-between">
+                <Typography variant="body2" color="muted">
+                  Sacred Key:
+                </Typography>
+                <button
+                  onClick={handleRevealSacredKey}
+                  className="flex items-center space-x-2 text-orange-400 hover:text-orange-300 transition-colors"
+                >
+                  {sacredKeyRevealed ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  <span className="text-sm">{sacredKeyRevealed ? 'Hide' : 'Reveal'}</span>
+                </button>
+              </div>
+              
+              {sacredKeyRevealed && (
+                <div className="mt-2 p-3 bg-black/30 rounded-lg border border-orange-500/30 backdrop-blur-sm">
+                  <code className="text-xs text-orange-300 font-mono break-all">
+                    sk-sacred-bond-of-trust-demo-key-2024
+                  </code>
+                </div>
+              )}
+            </div>
+          </div>
 
-        <div className="mt-6 text-center">
-          <Typography variant="caption" color="muted" className="italic">
-            "With great power comes great responsibility"
-          </Typography>
+          <div className="space-y-4">
+            <Button
+              onClick={handleUseSacredKey}
+              variant="primary"
+              size="lg"
+              fullWidth
+              isLoading={isValidating}
+              loadingText="Establishing sacred bond..."
+              leftIcon={<Heart className="w-5 h-5" />}
+              className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+            >
+              Accept Sacred Bond
+            </Button>
+            
+            <Button
+              onClick={handleModalClose}
+              variant="ghost"
+              size="md"
+              fullWidth
+            >
+              I'm not ready for this responsibility
+            </Button>
+          </div>
+
+          <div className="mt-6 text-center">
+            <Typography variant="caption" color="muted" className="italic">
+              "With great power comes great responsibility"
+            </Typography>
+            <div className="flex items-center justify-center space-x-2 mt-2">
+              <Cpu className="w-3 h-3 text-orange-400/60" />
+              <Typography variant="caption" color="muted" className="text-xs">
+                Conway's Game of Life • Infinite Complexity from Simple Rules
+              </Typography>
+              <Cpu className="w-3 h-3 text-orange-400/60" />
+            </div>
+          </div>
         </div>
       </Modal>
     </>
