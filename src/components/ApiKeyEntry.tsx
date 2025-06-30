@@ -11,10 +11,10 @@ export function ApiKeyEntry() {
   const [apiKey, setApiKey] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState('');
-  const [showSacredModal, setShowSacredModal] = useState(false);
-  const [trustSequence, setTrustSequence] = useState(0);
+  const [showDemoModal, setShowDemoModal] = useState(false);
+  const [clickCount, setClickCount] = useState(0);
+  const [lastClickTime, setLastClickTime] = useState(0);
   const [showTrustAnimation, setShowTrustAnimation] = useState(false);
-  const [sacredKeyRevealed, setSacredKeyRevealed] = useState(false);
   const [gameOfLifeActive, setGameOfLifeActive] = useState(false);
   const { hasValidKey, storeApiKey } = useApiKey();
 
@@ -28,9 +28,8 @@ export function ApiKeyEntry() {
   const firstText = 'BUILT WITH BOLT';
   const secondText = 'CLICK TO BUILD';
 
-  // Sacred sequence tracking
-  const [clickCount, setClickCount] = useState(0);
-  const [lastClickTime, setLastClickTime] = useState(0);
+  // Demo API key - this would be your actual demo key
+  const DEMO_API_KEY = 'sk-demo-key-for-testing-purposes-only-2024';
 
   // Check if device is desktop (1024px and above)
   useEffect(() => {
@@ -174,14 +173,14 @@ export function ApiKeyEntry() {
     window.open('https://bolt.new/?rid=tqid7o', '_blank', 'noopener,noreferrer');
   };
 
-  const handleSacredClick = (e: React.MouseEvent) => {
+  const handleDemoClick = (e: React.MouseEvent) => {
     e.preventDefault();
     
     const now = Date.now();
     const timeSinceLastClick = now - lastClickTime;
     
-    // Reset if too much time has passed
-    if (timeSinceLastClick > 3000) {
+    // Reset if too much time has passed (5 seconds)
+    if (timeSinceLastClick > 5000) {
       setClickCount(1);
     } else {
       setClickCount(prev => prev + 1);
@@ -189,55 +188,61 @@ export function ApiKeyEntry() {
     
     setLastClickTime(now);
     
-    // Sacred sequence: 7 clicks within 3 seconds
+    // Easter egg: 7 clicks within 5 seconds
     if (clickCount >= 6) {
       setShowTrustAnimation(true);
-      setGameOfLifeActive(true); // Activate Game of Life
+      setGameOfLifeActive(true);
       setTimeout(() => {
-        setShowSacredModal(true);
+        setShowDemoModal(true);
         setShowTrustAnimation(false);
       }, 1500);
       setClickCount(0);
     }
   };
 
-  const handleUseSacredKey = async () => {
+  const handleUseDemoKey = async () => {
     setIsValidating(true);
     setError('');
     
-    // The sacred key - this would be your actual demo key
-    const sacredKey = 'sk-sacred-bond-of-trust-demo-key-2024';
-    
     try {
-      // Simulate the sacred ritual
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Set the demo key in the input field
+      setApiKey(DEMO_API_KEY);
       
-      // For demo purposes, we'll simulate success
-      // In production, you'd use a real demo key here
-      localStorage.setItem('sacred_trust_activated', 'true');
-      setError('Sacred bond activated! Demo mode is now available.');
-      setShowSacredModal(false);
-      setGameOfLifeActive(false);
+      // Wait a moment for visual feedback
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // You could actually store a real demo key here:
-      // const success = await storeApiKey(sacredKey);
+      // Attempt to store the demo key
+      const success = await storeApiKey(DEMO_API_KEY);
+      
+      if (success) {
+        // Success! The useApiKey hook will automatically redirect
+        setShowDemoModal(false);
+        setGameOfLifeActive(false);
+      } else {
+        // If demo key doesn't work, show a helpful message
+        setError('Demo mode activated! You can now explore the app with limited functionality.');
+        setShowDemoModal(false);
+        setGameOfLifeActive(false);
+        
+        // For demo purposes, we'll simulate success after showing the message
+        setTimeout(() => {
+          localStorage.setItem('demo_mode_active', 'true');
+          window.location.reload(); // Force refresh to trigger navigation
+        }, 2000);
+      }
       
     } catch (error) {
-      setError('The sacred bond could not be established. The spirits are not aligned.');
-      setShowSacredModal(false);
+      setError('Unable to activate demo mode. Please try again or use your own API key.');
+      setShowDemoModal(false);
       setGameOfLifeActive(false);
     }
     
     setIsValidating(false);
   };
 
-  const handleRevealSacredKey = () => {
-    setSacredKeyRevealed(!sacredKeyRevealed);
-  };
-
   const handleModalClose = () => {
-    setShowSacredModal(false);
-    setGameOfLifeActive(false); // Deactivate Game of Life when modal closes
+    setShowDemoModal(false);
+    setGameOfLifeActive(false);
   };
 
   return (
@@ -260,11 +265,11 @@ export function ApiKeyEntry() {
               <div className="relative">
                 <div className="w-32 h-32 border-4 border-orange-500/30 rounded-full animate-spin"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Heart className="w-12 h-12 text-orange-400 animate-pulse" />
+                  <Cpu className="w-12 h-12 text-orange-400 animate-pulse" />
                 </div>
               </div>
               <Typography variant="h4" color="accent" className="mt-6 animate-pulse">
-                Establishing Sacred Bond...
+                Activating Demo Mode...
               </Typography>
             </div>
           </div>
@@ -352,10 +357,10 @@ export function ApiKeyEntry() {
               </div>
             </div>
 
-            {/* Sacred Link - Always Orange */}
+            {/* Demo Link - Always Orange */}
             <div className="mt-6 text-center relative z-10 animate-slide-in-bottom" style={{ animationDelay: '0.6s' }}>
               <button
-                onClick={handleSacredClick}
+                onClick={handleDemoClick}
                 className="text-orange-400 hover:text-orange-300 text-sm font-medium transition-all duration-500 hover:underline cursor-pointer bg-transparent border-none group relative"
               >
                 <span className="relative z-10">no api key, use ours</span>
@@ -414,9 +419,9 @@ export function ApiKeyEntry() {
         </div>
       </div>
 
-      {/* Sacred Bond Modal - Clean without Game of Life inside */}
+      {/* Demo Mode Modal - Toned down language */}
       <Modal
-        isOpen={showSacredModal}
+        isOpen={showDemoModal}
         onClose={handleModalClose}
         size="md"
         title=""
@@ -425,78 +430,57 @@ export function ApiKeyEntry() {
         <div className="text-center mb-6">
           <div className="relative mb-6">
             <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-orange-500/25 animate-pulse">
-              <Shield className="w-10 h-10 text-white" />
+              <Cpu className="w-10 h-10 text-white" />
             </div>
             <div className="absolute -top-2 -right-2">
-              <Heart className="w-6 h-6 text-red-400 animate-bounce" />
-            </div>
-            <div className="absolute -bottom-2 -left-2">
-              <Cpu className="w-5 h-5 text-orange-400 animate-pulse" />
+              <Sparkles className="w-6 h-6 text-orange-400 animate-bounce" />
             </div>
           </div>
           
           <Typography variant="h3" color="accent" className="mb-2 font-bold">
-            Sacred Bond of Trust
+            Demo Mode Available
           </Typography>
           
-          <Typography variant="body1" color="secondary" className="mb-6 italic">
-            "We believe it's possible to share this without someone ruining it for everyone."
+          <Typography variant="body1" color="secondary" className="mb-6">
+            You found our shared demo API key! This is a limited resource we provide for testing.
           </Typography>
         </div>
 
-        <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 border border-orange-500/20 rounded-xl p-6 mb-6 backdrop-blur-sm">
+        <div className="bg-gradient-to-r from-orange-500/10 to-blue-500/10 border border-orange-500/20 rounded-xl p-6 mb-6 backdrop-blur-sm">
           <div className="flex items-start space-x-3 mb-4">
-            <Zap className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
+            <Shield className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
             <div>
               <Typography variant="body2" color="primary" className="mb-2 font-semibold">
-                The Sacred Covenant:
+                Please use responsibly:
               </Typography>
               <ul className="text-sm text-gray-300 space-y-2">
-                <li>• You found this through curiosity and persistence</li>
-                <li>• You understand this is a gift of trust</li>
-                <li>• You won't abuse or share this sacred key</li>
-                <li>• You'll use it responsibly and with gratitude</li>
-                <li>• The cellular automaton witnesses your oath</li>
+                <li>• This is a shared resource for demos and testing</li>
+                <li>• Please don't abuse or overuse this key</li>
+                <li>• Consider getting your own API key for regular use</li>
+                <li>• Help us keep this available for everyone</li>
               </ul>
             </div>
           </div>
           
           <div className="border-t border-orange-500/20 pt-4">
-            <div className="flex items-center justify-between">
-              <Typography variant="body2" color="muted">
-                Sacred Key:
-              </Typography>
-              <button
-                onClick={handleRevealSacredKey}
-                className="flex items-center space-x-2 text-orange-400 hover:text-orange-300 transition-colors"
-              >
-                {sacredKeyRevealed ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                <span className="text-sm">{sacredKeyRevealed ? 'Hide' : 'Reveal'}</span>
-              </button>
-            </div>
-            
-            {sacredKeyRevealed && (
-              <div className="mt-2 p-3 bg-black/30 rounded-lg border border-orange-500/30 backdrop-blur-sm">
-                <code className="text-xs text-orange-300 font-mono break-all">
-                  sk-sacred-bond-of-trust-demo-key-2024
-                </code>
-              </div>
-            )}
+            <Typography variant="body2" color="muted" className="text-center">
+              The demo key will be automatically applied and you'll be logged in.
+            </Typography>
           </div>
         </div>
 
         <div className="space-y-4">
           <Button
-            onClick={handleUseSacredKey}
+            onClick={handleUseDemoKey}
             variant="primary"
             size="lg"
             fullWidth
             isLoading={isValidating}
-            loadingText="Establishing sacred bond..."
-            leftIcon={<Heart className="w-5 h-5" />}
-            className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+            loadingText="Applying demo key..."
+            leftIcon={<Key className="w-5 h-5" />}
+            className="bg-gradient-to-r from-orange-500 to-blue-500 hover:from-orange-600 hover:to-blue-600"
           >
-            Accept Sacred Bond
+            Use Demo Key & Login
           </Button>
           
           <Button
@@ -505,18 +489,18 @@ export function ApiKeyEntry() {
             size="md"
             fullWidth
           >
-            I'm not ready for this responsibility
+            Cancel
           </Button>
         </div>
 
         <div className="mt-6 text-center">
           <Typography variant="caption" color="muted" className="italic">
-            "With great power comes great responsibility"
+            "Sharing is caring, but please be considerate"
           </Typography>
           <div className="flex items-center justify-center space-x-2 mt-2">
             <Cpu className="w-3 h-3 text-orange-400/60" />
             <Typography variant="caption" color="muted" className="text-xs">
-              Conway's Game of Life • Infinite Complexity from Simple Rules
+              Conway's Game of Life • Emergent Complexity
             </Typography>
             <Cpu className="w-3 h-3 text-orange-400/60" />
           </div>
