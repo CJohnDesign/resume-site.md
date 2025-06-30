@@ -188,8 +188,11 @@ export function ApiKeyEntry() {
     
     setLastClickTime(now);
     
+    console.log(`Click ${clickCount + 1}/7 for Easter egg`); // Debug log
+    
     // Easter egg: 7 clicks within 5 seconds
-    if (clickCount >= 6) {
+    if (clickCount >= 6) { // 6 because we increment after checking
+      console.log('Easter egg activated!'); // Debug log
       setShowTrustAnimation(true);
       setGameOfLifeActive(true);
       setTimeout(() => {
@@ -357,13 +360,19 @@ export function ApiKeyEntry() {
               </div>
             </div>
 
-            {/* Demo Link - Always Orange */}
+            {/* Demo Link - Always Orange with Click Counter Visual Feedback */}
             <div className="mt-6 text-center relative z-10 animate-slide-in-bottom" style={{ animationDelay: '0.6s' }}>
               <button
                 onClick={handleDemoClick}
                 className="text-orange-400 hover:text-orange-300 text-sm font-medium transition-all duration-500 hover:underline cursor-pointer bg-transparent border-none group relative"
               >
                 <span className="relative z-10">no api key, use ours</span>
+                {/* Visual feedback for clicks */}
+                {clickCount > 0 && (
+                  <div className="absolute -top-2 -right-2 w-5 h-5 bg-orange-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
+                    {clickCount}
+                  </div>
+                )}
               </button>
             </div>
           </div>
