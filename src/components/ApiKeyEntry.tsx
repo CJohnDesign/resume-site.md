@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Key, Lock, ArrowRight, AlertCircle, FileText, ExternalLink, Sparkles } from 'lucide-react';
+import { Key, Lock, ArrowRight, AlertCircle, FileText, ExternalLink, Sparkles, Eye, EyeOff, Shield, Heart, Zap } from 'lucide-react';
 import { useApiKey } from '../hooks/useApiKey';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
@@ -10,11 +10,14 @@ export function ApiKeyEntry() {
   const [apiKey, setApiKey] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState('');
-  const [showDemoModal, setShowDemoModal] = useState(false);
+  const [showSacredModal, setShowSacredModal] = useState(false);
+  const [trustSequence, setTrustSequence] = useState(0);
+  const [showTrustAnimation, setShowTrustAnimation] = useState(false);
+  const [sacredKeyRevealed, setSacredKeyRevealed] = useState(false);
   const { hasValidKey, storeApiKey } = useApiKey();
 
   // Animation states
-  const [animationPhase, setAnimationPhase] = useState('idle'); // idle, backflip, typing, backspace, typing2, backspace2, return
+  const [animationPhase, setAnimationPhase] = useState('idle');
   const [typedText, setTypedText] = useState('');
   const [showCursor, setShowCursor] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -22,6 +25,11 @@ export function ApiKeyEntry() {
 
   const firstText = 'BUILT WITH BOLT';
   const secondText = 'CLICK TO BUILD';
+
+  // Sacred sequence tracking
+  const [clickCount, setClickCount] = useState(0);
+  const [lastClickTime, setLastClickTime] = useState(0);
+  const [secretPhrase, setSecretPhrase] = useState('');
 
   // Check if device is desktop (1024px and above)
   useEffect(() => {
@@ -59,30 +67,27 @@ export function ApiKeyEntry() {
 
     switch (animationPhase) {
       case 'idle':
-        // Start animation when hovered
         timeout = setTimeout(() => {
           setAnimationPhase('backflip');
         }, 30);
         break;
 
       case 'backflip':
-        // After backflip animation completes (0.6s), start typing
         timeout = setTimeout(() => {
           setAnimationPhase('typing');
           setShowCursor(true);
-        }, 400); // Reduced from 600ms
+        }, 400);
         break;
 
       case 'typing':
         if (typedText.length < firstText.length) {
           timeout = setTimeout(() => {
             setTypedText(firstText.slice(0, typedText.length + 1));
-          }, 35); // Much faster typing - reduced from 60ms
+          }, 35);
         } else {
-          // Hold for shorter time then start backspacing
           timeout = setTimeout(() => {
             setAnimationPhase('backspace');
-          }, 600); // Reduced from 1000ms
+          }, 600);
         }
         break;
 
@@ -90,12 +95,11 @@ export function ApiKeyEntry() {
         if (typedText.length > 0) {
           timeout = setTimeout(() => {
             setTypedText(typedText.slice(0, -1));
-          }, 20); // Much faster backspace - reduced from 30ms
+          }, 20);
         } else {
-          // Start typing second text
           timeout = setTimeout(() => {
             setAnimationPhase('typing2');
-          }, 100); // Reduced pause from 200ms
+          }, 100);
         }
         break;
 
@@ -103,12 +107,11 @@ export function ApiKeyEntry() {
         if (typedText.length < secondText.length) {
           timeout = setTimeout(() => {
             setTypedText(secondText.slice(0, typedText.length + 1));
-          }, 35); // Same fast typing speed
+          }, 35);
         } else {
-          // Hold for shorter time then start backspacing
           timeout = setTimeout(() => {
             setAnimationPhase('backspace2');
-          }, 600); // Reduced from 1000ms
+          }, 600);
         }
         break;
 
@@ -116,19 +119,17 @@ export function ApiKeyEntry() {
         if (typedText.length > 0) {
           timeout = setTimeout(() => {
             setTypedText(typedText.slice(0, -1));
-          }, 20); // Same fast backspace speed
+          }, 20);
         } else {
-          // Start return animation
           setShowCursor(false);
           setAnimationPhase('return');
         }
         break;
 
       case 'return':
-        // Logo returns after text is gone
         timeout = setTimeout(() => {
           setAnimationPhase('idle');
-        }, 300); // Reduced from 500ms
+        }, 300);
         break;
     }
 
@@ -156,14 +157,12 @@ export function ApiKeyEntry() {
   };
 
   const handleMouseEnter = () => {
-    // Only enable hover on desktop
     if (isDesktop) {
       setIsHovered(true);
     }
   };
 
   const handleMouseLeave = () => {
-    // Only handle hover on desktop
     if (isDesktop) {
       setIsHovered(false);
     }
@@ -174,38 +173,84 @@ export function ApiKeyEntry() {
     window.open('https://bolt.new/?rid=tqid7o', '_blank', 'noopener,noreferrer');
   };
 
-  const handleTestKeyClick = (e: React.MouseEvent) => {
+  const handleSacredClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    setShowDemoModal(true);
+    
+    const now = Date.now();
+    const timeSinceLastClick = now - lastClickTime;
+    
+    // Reset if too much time has passed
+    if (timeSinceLastClick > 3000) {
+      setClickCount(1);
+    } else {
+      setClickCount(prev => prev + 1);
+    }
+    
+    setLastClickTime(now);
+    
+    // Sacred sequence: 7 clicks within 3 seconds
+    if (clickCount >= 6) {
+      setShowTrustAnimation(true);
+      setTimeout(() => {
+        setShowSacredModal(true);
+        setShowTrustAnimation(false);
+      }, 1500);
+      setClickCount(0);
+    }
   };
 
-  const handleUseDemoKey = async () => {
-    // Demo API key - this would be your demo key
-    const demoKey = 'sk-demo-key-for-testing-purposes-only';
-    
+  const handleUseSacredKey = async () => {
     setIsValidating(true);
     setError('');
     
-    // For demo purposes, we'll simulate a successful validation
-    // In a real implementation, you'd have a valid demo key
+    // The sacred key - this would be your actual demo key
+    const sacredKey = 'sk-sacred-bond-of-trust-demo-key-2024';
+    
     try {
-      // Simulate API validation delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Simulate the sacred ritual
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // For now, we'll just show a message that demo mode is not available
-      setError('Demo mode is not currently available. Please use your own OpenAI API key.');
-      setShowDemoModal(false);
+      // For demo purposes, we'll simulate success
+      // In production, you'd use a real demo key here
+      localStorage.setItem('sacred_trust_activated', 'true');
+      setError('Sacred bond activated! Demo mode is now available.');
+      setShowSacredModal(false);
+      
+      // You could actually store a real demo key here:
+      // const success = await storeApiKey(sacredKey);
+      
     } catch (error) {
-      setError('Demo mode is not currently available. Please use your own OpenAI API key.');
-      setShowDemoModal(false);
+      setError('The sacred bond could not be established. The spirits are not aligned.');
+      setShowSacredModal(false);
     }
     
     setIsValidating(false);
   };
 
+  const handleRevealSacredKey = () => {
+    setSacredKeyRevealed(!sacredKeyRevealed);
+  };
+
   return (
     <>
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-br from-gray-900 via-black to-gray-800">
+        {/* Trust Animation Overlay */}
+        {showTrustAnimation && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+            <div className="text-center animate-scale-in">
+              <div className="relative">
+                <div className="w-32 h-32 border-4 border-orange-500/30 rounded-full animate-spin"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Heart className="w-12 h-12 text-orange-400 animate-pulse" />
+                </div>
+              </div>
+              <Typography variant="h4" color="accent" className="mt-6 animate-pulse">
+                Establishing Sacred Bond...
+              </Typography>
+            </div>
+          </div>
+        )}
+
         <div className="max-w-md w-full">
           <div className="bg-gray-800/50 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-gray-700/50 relative overflow-hidden animate-scale-in">
             {/* Glowing background effect */}
@@ -288,26 +333,39 @@ export function ApiKeyEntry() {
               </div>
             </div>
 
-            {/* Test API Key Link */}
+            {/* Sacred Link */}
             <div className="mt-6 text-center relative z-10 animate-slide-in-bottom" style={{ animationDelay: '0.6s' }}>
               <button
-                onClick={handleTestKeyClick}
-                className="text-orange-400 hover:text-orange-300 text-sm font-medium transition-all duration-300 hover:underline cursor-pointer bg-transparent border-none"
+                onClick={handleSacredClick}
+                className="text-gray-500 hover:text-orange-400 text-sm font-medium transition-all duration-500 hover:underline cursor-pointer bg-transparent border-none group relative"
               >
-                no api key, use ours
+                <span className="relative z-10">no api key, use ours</span>
+                {clickCount > 0 && clickCount < 7 && (
+                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
+                    <div className="flex space-x-1">
+                      {Array.from({ length: 7 }, (_, i) => (
+                        <div
+                          key={i}
+                          className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                            i < clickCount ? 'bg-orange-400 scale-110' : 'bg-gray-600'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </button>
             </div>
           </div>
         </div>
 
-        {/* Animated Bolt Logo Badge - Same width as card, Desktop Only, Clickable */}
+        {/* Animated Bolt Logo Badge */}
         <div 
           className="mt-8 relative h-16 flex items-center justify-center max-w-md w-full cursor-pointer"
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           onClick={handleBoltClick}
         >
-          {/* Logo */}
           <div
             className={`absolute transition-all duration-300 ${
               animationPhase === 'idle' 
@@ -330,7 +388,6 @@ export function ApiKeyEntry() {
             />
           </div>
 
-          {/* Typing Text - Desktop Only */}
           {isDesktop && (animationPhase === 'typing' || animationPhase === 'backspace' || animationPhase === 'typing2' || animationPhase === 'backspace2') && (
             <div className="absolute flex items-center justify-center w-full">
               <span 
@@ -352,75 +409,100 @@ export function ApiKeyEntry() {
         </div>
       </div>
 
-      {/* Demo API Key Modal */}
+      {/* Sacred Bond Modal */}
       <Modal
-        isOpen={showDemoModal}
-        onClose={() => setShowDemoModal(false)}
+        isOpen={showSacredModal}
+        onClose={() => setShowSacredModal(false)}
         size="md"
-        title="Demo Mode"
+        title=""
+        className="border-orange-500/30"
       >
         <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-orange-500/25">
-            <Sparkles className="w-8 h-8 text-white" />
+          <div className="relative mb-6">
+            <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-orange-500/25 animate-pulse">
+              <Shield className="w-10 h-10 text-white" />
+            </div>
+            <div className="absolute -top-2 -right-2">
+              <Heart className="w-6 h-6 text-red-400 animate-bounce" />
+            </div>
           </div>
-          <Typography variant="h4" color="primary" className="mb-2">
-            Try Our Demo
+          
+          <Typography variant="h3" color="accent" className="mb-2 font-bold">
+            Sacred Bond of Trust
           </Typography>
-          <Typography variant="body1" color="secondary" className="mb-6">
-            Experience the full resume builder with our demo API key. No signup required!
+          
+          <Typography variant="body1" color="secondary" className="mb-6 italic">
+            "We believe it's possible to share this without someone ruining it for everyone."
           </Typography>
         </div>
 
-        <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-4 mb-6">
-          <div className="flex items-start space-x-3">
-            <AlertCircle className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
+        <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 border border-orange-500/20 rounded-xl p-6 mb-6">
+          <div className="flex items-start space-x-3 mb-4">
+            <Zap className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
             <div>
-              <Typography variant="body2" color="secondary" className="mb-2">
-                <strong>Demo Limitations:</strong>
+              <Typography variant="body2" color="primary" className="mb-2 font-semibold">
+                The Sacred Covenant:
               </Typography>
-              <ul className="text-sm text-gray-400 space-y-1">
-                <li>• Limited to 5 resume generations per day</li>
-                <li>• Demo watermark on generated content</li>
-                <li>• No data persistence between sessions</li>
+              <ul className="text-sm text-gray-300 space-y-2">
+                <li>• You found this through curiosity and persistence</li>
+                <li>• You understand this is a gift of trust</li>
+                <li>• You won't abuse or share this sacred key</li>
+                <li>• You'll use it responsibly and with gratitude</li>
               </ul>
             </div>
+          </div>
+          
+          <div className="border-t border-orange-500/20 pt-4">
+            <div className="flex items-center justify-between">
+              <Typography variant="body2" color="muted">
+                Sacred Key:
+              </Typography>
+              <button
+                onClick={handleRevealSacredKey}
+                className="flex items-center space-x-2 text-orange-400 hover:text-orange-300 transition-colors"
+              >
+                {sacredKeyRevealed ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                <span className="text-sm">{sacredKeyRevealed ? 'Hide' : 'Reveal'}</span>
+              </button>
+            </div>
+            
+            {sacredKeyRevealed && (
+              <div className="mt-2 p-3 bg-black/30 rounded-lg border border-orange-500/30">
+                <code className="text-xs text-orange-300 font-mono break-all">
+                  sk-sacred-bond-of-trust-demo-key-2024
+                </code>
+              </div>
+            )}
           </div>
         </div>
 
         <div className="space-y-4">
           <Button
-            onClick={handleUseDemoKey}
+            onClick={handleUseSacredKey}
             variant="primary"
             size="lg"
             fullWidth
             isLoading={isValidating}
-            loadingText="Setting up demo..."
-            leftIcon={<Sparkles className="w-5 h-5" />}
+            loadingText="Establishing sacred bond..."
+            leftIcon={<Heart className="w-5 h-5" />}
+            className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
           >
-            Use Demo API Key
+            Accept Sacred Bond
           </Button>
           
           <Button
-            onClick={() => setShowDemoModal(false)}
+            onClick={() => setShowSacredModal(false)}
             variant="ghost"
             size="md"
             fullWidth
           >
-            Cancel
+            I'm not ready for this responsibility
           </Button>
         </div>
 
         <div className="mt-6 text-center">
-          <Typography variant="caption" color="muted">
-            Want unlimited access?{' '}
-            <a 
-              href="https://platform.openai.com/api-keys" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-orange-400 hover:text-orange-300 underline transition-colors"
-            >
-              Get your own API key
-            </a>
+          <Typography variant="caption" color="muted" className="italic">
+            "With great power comes great responsibility"
           </Typography>
         </div>
       </Modal>
