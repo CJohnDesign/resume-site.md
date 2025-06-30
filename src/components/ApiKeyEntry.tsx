@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Key, Lock, ArrowRight, AlertCircle, FileText } from 'lucide-react';
+import { Key, Lock, ArrowRight, AlertCircle, FileText, ExternalLink, Sparkles } from 'lucide-react';
 import { useApiKey } from '../hooks/useApiKey';
+import { Modal } from './ui/Modal';
+import { Button } from './ui/Button';
+import { Typography } from './ui/Typography';
 
 export function ApiKeyEntry() {
   const [apiKey, setApiKey] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState('');
+  const [showDemoModal, setShowDemoModal] = useState(false);
   const { hasValidKey, storeApiKey } = useApiKey();
 
   // Animation states
@@ -172,156 +176,254 @@ export function ApiKeyEntry() {
 
   const handleTestKeyClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    // Do nothing for now
+    setShowDemoModal(true);
+  };
+
+  const handleUseDemoKey = async () => {
+    // Demo API key - this would be your demo key
+    const demoKey = 'sk-demo-key-for-testing-purposes-only';
+    
+    setIsValidating(true);
+    setError('');
+    
+    // For demo purposes, we'll simulate a successful validation
+    // In a real implementation, you'd have a valid demo key
+    try {
+      // Simulate API validation delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // For now, we'll just show a message that demo mode is not available
+      setError('Demo mode is not currently available. Please use your own OpenAI API key.');
+      setShowDemoModal(false);
+    } catch (error) {
+      setError('Demo mode is not currently available. Please use your own OpenAI API key.');
+      setShowDemoModal(false);
+    }
+    
+    setIsValidating(false);
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-br from-gray-900 via-black to-gray-800">
-      <div className="max-w-md w-full">
-        <div className="bg-gray-800/50 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-gray-700/50 relative overflow-hidden animate-scale-in">
-          {/* Glowing background effect */}
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-transparent to-orange-600/5 pointer-events-none transition-opacity-fast"></div>
-          
-          <div className="text-center mb-8 relative z-10 animate-slide-in-bottom">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full mb-6 shadow-lg shadow-orange-500/25 transition-all duration-300 hover:scale-110 hover:shadow-orange-500/40">
-              <FileText className="w-10 h-10 text-white transition-all" />
-            </div>
-            <h1 className="text-3xl font-bold text-white mb-2 transition-colors">
-              <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
-                resume-site.md
-              </span>
-            </h1>
-            <p className="text-gray-400 leading-relaxed transition-colors">
-              Enter your OpenAI API key to begin building your resume through intelligent conversation with{' '}
-              <a 
-                href="https://bolt.new/?rid=tqid7o" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-orange-400 hover:text-orange-300 underline transition-all duration-300"
-              >
-                Bolt
-              </a>.
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6 relative z-10 animate-slide-in-bottom" style={{ animationDelay: '0.2s' }}>
-            <div>
-              <label htmlFor="apiKey" className="block text-sm font-medium text-gray-300 mb-3 transition-colors">
-                OpenAI API Key
-              </label>
-              <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-orange-400 transition-all duration-300" />
-                <input
-                  type="password"
-                  id="apiKey"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="sk-..."
-                  className="w-full pl-12 pr-4 py-4 bg-gray-900/50 border border-gray-600 rounded-xl focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-300 text-white placeholder-gray-500 backdrop-blur-sm hover:bg-gray-900/70 hover:border-gray-500"
-                  disabled={isValidating}
-                />
+    <>
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-br from-gray-900 via-black to-gray-800">
+        <div className="max-w-md w-full">
+          <div className="bg-gray-800/50 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-gray-700/50 relative overflow-hidden animate-scale-in">
+            {/* Glowing background effect */}
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-transparent to-orange-600/5 pointer-events-none transition-opacity-fast"></div>
+            
+            <div className="text-center mb-8 relative z-10 animate-slide-in-bottom">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full mb-6 shadow-lg shadow-orange-500/25 transition-all duration-300 hover:scale-110 hover:shadow-orange-500/40">
+                <FileText className="w-10 h-10 text-white transition-all" />
               </div>
-              {error && (
-                <div className="mt-3 flex items-center text-red-400 text-sm bg-red-500/10 p-3 rounded-lg border border-red-500/20 animate-fade-in transition-all">
-                  <AlertCircle className="w-4 h-4 mr-2 flex-shrink-0 transition-all" />
-                  {error}
-                </div>
-              )}
+              <h1 className="text-3xl font-bold text-white mb-2 transition-colors">
+                <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
+                  resume-site.md
+                </span>
+              </h1>
+              <p className="text-gray-400 leading-relaxed transition-colors">
+                Enter your OpenAI API key to begin building your resume through intelligent conversation with{' '}
+                <a 
+                  href="https://bolt.new/?rid=tqid7o" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-orange-400 hover:text-orange-300 underline transition-all duration-300"
+                >
+                  Bolt
+                </a>.
+              </p>
             </div>
 
-            <button
-              type="submit"
-              disabled={!apiKey.trim() || isValidating}
-              className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold py-4 px-6 rounded-xl flex items-center justify-center space-x-3 transition-all duration-300 transform hover:scale-[1.02] disabled:scale-100 shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 disabled:shadow-none"
-            >
-              {isValidating ? (
-                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin transition-all" />
-              ) : (
-                <>
-                  <span className="transition-all">Continue</span>
-                  <ArrowRight className="w-5 h-5 transition-all group-hover:translate-x-1" />
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="mt-8 p-4 bg-gray-900/30 rounded-xl border border-gray-700/50 backdrop-blur-sm relative z-10 animate-slide-in-bottom transition-all hover:bg-gray-900/50 hover:border-gray-600/50" style={{ animationDelay: '0.4s' }}>
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0 w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center transition-all hover:bg-orange-500/30">
-                <Lock className="w-4 h-4 text-orange-400 transition-all" />
-              </div>
+            <form onSubmit={handleSubmit} className="space-y-6 relative z-10 animate-slide-in-bottom" style={{ animationDelay: '0.2s' }}>
               <div>
-                <h3 className="text-sm font-medium text-white mb-1 transition-colors">Secure Storage</h3>
-                <p className="text-xs text-gray-400 leading-relaxed transition-colors">
-                  Your API key is encrypted and stored locally. It never leaves your device.
-                </p>
+                <label htmlFor="apiKey" className="block text-sm font-medium text-gray-300 mb-3 transition-colors">
+                  OpenAI API Key
+                </label>
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-orange-400 transition-all duration-300" />
+                  <input
+                    type="password"
+                    id="apiKey"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    placeholder="sk-..."
+                    className="w-full pl-12 pr-4 py-4 bg-gray-900/50 border border-gray-600 rounded-xl focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-300 text-white placeholder-gray-500 backdrop-blur-sm hover:bg-gray-900/70 hover:border-gray-500"
+                    disabled={isValidating}
+                  />
+                </div>
+                {error && (
+                  <div className="mt-3 flex items-center text-red-400 text-sm bg-red-500/10 p-3 rounded-lg border border-red-500/20 animate-fade-in transition-all">
+                    <AlertCircle className="w-4 h-4 mr-2 flex-shrink-0 transition-all" />
+                    {error}
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={!apiKey.trim() || isValidating}
+                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold py-4 px-6 rounded-xl flex items-center justify-center space-x-3 transition-all duration-300 transform hover:scale-[1.02] disabled:scale-100 shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 disabled:shadow-none"
+              >
+                {isValidating ? (
+                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin transition-all" />
+                ) : (
+                  <>
+                    <span className="transition-all">Continue</span>
+                    <ArrowRight className="w-5 h-5 transition-all group-hover:translate-x-1" />
+                  </>
+                )}
+              </button>
+            </form>
+
+            <div className="mt-8 p-4 bg-gray-900/30 rounded-xl border border-gray-700/50 backdrop-blur-sm relative z-10 animate-slide-in-bottom transition-all hover:bg-gray-900/50 hover:border-gray-600/50" style={{ animationDelay: '0.4s' }}>
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center transition-all hover:bg-orange-500/30">
+                  <Lock className="w-4 h-4 text-orange-400 transition-all" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-white mb-1 transition-colors">Secure Storage</h3>
+                  <p className="text-xs text-gray-400 leading-relaxed transition-colors">
+                    Your API key is encrypted and stored locally. It never leaves your device.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Test API Key Link */}
-          <div className="mt-6 text-center relative z-10 animate-slide-in-bottom" style={{ animationDelay: '0.6s' }}>
-            <a
-              href="#"
-              onClick={handleTestKeyClick}
-              className="text-orange-400 hover:text-orange-300 text-sm font-medium transition-all duration-300 hover:underline"
-            >
-              no api key, use ours
-            </a>
+            {/* Test API Key Link */}
+            <div className="mt-6 text-center relative z-10 animate-slide-in-bottom" style={{ animationDelay: '0.6s' }}>
+              <button
+                onClick={handleTestKeyClick}
+                className="text-orange-400 hover:text-orange-300 text-sm font-medium transition-all duration-300 hover:underline cursor-pointer bg-transparent border-none"
+              >
+                no api key, use ours
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Animated Bolt Logo Badge - Same width as card, Desktop Only, Clickable */}
-      <div 
-        className="mt-8 relative h-16 flex items-center justify-center max-w-md w-full cursor-pointer"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onClick={handleBoltClick}
-      >
-        {/* Logo */}
-        <div
-          className={`absolute transition-all duration-300 ${
-            animationPhase === 'idle' 
-              ? `${isDesktop ? 'hover:opacity-100 hover:scale-110' : ''} ${!isHovered ? 'bolt-pulse-glow' : ''}` 
-              : 'pointer-events-none'
-          }`}
+        {/* Animated Bolt Logo Badge - Same width as card, Desktop Only, Clickable */}
+        <div 
+          className="mt-8 relative h-16 flex items-center justify-center max-w-md w-full cursor-pointer"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onClick={handleBoltClick}
         >
-          <img 
-            src="/white_circle_360x360.png" 
-            alt="Built with Bolt" 
-            className={`w-16 h-16 transition-all duration-300 ${
-              isDesktop && animationPhase === 'backflip' 
-                ? 'bolt-backflip' 
-                : isDesktop && animationPhase === 'return'
-                ? 'bolt-return'
-                : isDesktop && (animationPhase === 'typing' || animationPhase === 'backspace' || animationPhase === 'typing2' || animationPhase === 'backspace2')
-                ? 'opacity-0 invisible'
-                : ''
+          {/* Logo */}
+          <div
+            className={`absolute transition-all duration-300 ${
+              animationPhase === 'idle' 
+                ? `${isDesktop ? 'hover:opacity-100 hover:scale-110' : ''} ${!isHovered ? 'bolt-pulse-glow' : ''}` 
+                : 'pointer-events-none'
             }`}
-          />
+          >
+            <img 
+              src="/white_circle_360x360.png" 
+              alt="Built with Bolt" 
+              className={`w-16 h-16 transition-all duration-300 ${
+                isDesktop && animationPhase === 'backflip' 
+                  ? 'bolt-backflip' 
+                  : isDesktop && animationPhase === 'return'
+                  ? 'bolt-return'
+                  : isDesktop && (animationPhase === 'typing' || animationPhase === 'backspace' || animationPhase === 'typing2' || animationPhase === 'backspace2')
+                  ? 'opacity-0 invisible'
+                  : ''
+              }`}
+            />
+          </div>
+
+          {/* Typing Text - Desktop Only */}
+          {isDesktop && (animationPhase === 'typing' || animationPhase === 'backspace' || animationPhase === 'typing2' || animationPhase === 'backspace2') && (
+            <div className="absolute flex items-center justify-center w-full">
+              <span 
+                className="text-white font-mono text-sm font-medium tracking-wider whitespace-nowrap"
+                style={{
+                  fontFamily: 'Inter, system-ui, sans-serif',
+                  fontWeight: 500,
+                  fontSize: '14px',
+                  letterSpacing: '0.05em'
+                }}
+              >
+                {typedText}
+                {showCursor && (
+                  <span className="animate-pulse ml-1 text-orange-400">|</span>
+                )}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Demo API Key Modal */}
+      <Modal
+        isOpen={showDemoModal}
+        onClose={() => setShowDemoModal(false)}
+        size="md"
+        title="Demo Mode"
+      >
+        <div className="text-center mb-6">
+          <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-orange-500/25">
+            <Sparkles className="w-8 h-8 text-white" />
+          </div>
+          <Typography variant="h4" color="primary" className="mb-2">
+            Try Our Demo
+          </Typography>
+          <Typography variant="body1" color="secondary" className="mb-6">
+            Experience the full resume builder with our demo API key. No signup required!
+          </Typography>
         </div>
 
-        {/* Typing Text - Desktop Only */}
-        {isDesktop && (animationPhase === 'typing' || animationPhase === 'backspace' || animationPhase === 'typing2' || animationPhase === 'backspace2') && (
-          <div className="absolute flex items-center justify-center w-full">
-            <span 
-              className="text-white font-mono text-sm font-medium tracking-wider whitespace-nowrap"
-              style={{
-                fontFamily: 'Inter, system-ui, sans-serif',
-                fontWeight: 500,
-                fontSize: '14px',
-                letterSpacing: '0.05em'
-              }}
-            >
-              {typedText}
-              {showCursor && (
-                <span className="animate-pulse ml-1 text-orange-400">|</span>
-              )}
-            </span>
+        <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-4 mb-6">
+          <div className="flex items-start space-x-3">
+            <AlertCircle className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <Typography variant="body2" color="secondary" className="mb-2">
+                <strong>Demo Limitations:</strong>
+              </Typography>
+              <ul className="text-sm text-gray-400 space-y-1">
+                <li>• Limited to 5 resume generations per day</li>
+                <li>• Demo watermark on generated content</li>
+                <li>• No data persistence between sessions</li>
+              </ul>
+            </div>
           </div>
-        )}
-      </div>
-    </div>
+        </div>
+
+        <div className="space-y-4">
+          <Button
+            onClick={handleUseDemoKey}
+            variant="primary"
+            size="lg"
+            fullWidth
+            isLoading={isValidating}
+            loadingText="Setting up demo..."
+            leftIcon={<Sparkles className="w-5 h-5" />}
+          >
+            Use Demo API Key
+          </Button>
+          
+          <Button
+            onClick={() => setShowDemoModal(false)}
+            variant="ghost"
+            size="md"
+            fullWidth
+          >
+            Cancel
+          </Button>
+        </div>
+
+        <div className="mt-6 text-center">
+          <Typography variant="caption" color="muted">
+            Want unlimited access?{' '}
+            <a 
+              href="https://platform.openai.com/api-keys" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-orange-400 hover:text-orange-300 underline transition-colors"
+            >
+              Get your own API key
+            </a>
+          </Typography>
+        </div>
+      </Modal>
+    </>
   );
 }
